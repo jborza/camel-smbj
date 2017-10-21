@@ -53,8 +53,23 @@ public class SmbOperations implements GenericFileOperations<File> {
     }
 
     @Override
-    public boolean buildDirectory(String directory, boolean b) throws GenericFileOperationFailedException {
-        return false;
+    public boolean buildDirectory(String directory, boolean absolute) throws GenericFileOperationFailedException {
+        login();
+        SmbConfiguration config = ((SmbConfiguration)endpoint.getConfiguration());
+
+        DiskShare share = (DiskShare) session.connectShare(config.getShare());
+
+        Path path = Paths.get(directory);
+        int len = path.getNameCount();
+        for(int i = 0; i < len; i++) {
+            Path partialPath = path.subpath(0, i+1);
+            String pathAsString =partialPath.toString();
+            boolean exists = share.folderExists(pathAsString);
+            if(exists == false)
+                share.mkdir(pathAsString);
+        }
+
+        return true;
     }
 
     public static int copy(InputStream input, OutputStream output) throws IOException {
