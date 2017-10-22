@@ -10,6 +10,11 @@ import java.util.Map;
 
 public class SmbComponent extends GenericFileComponent<File> {
 
+    public SmbComponent() {
+
+    }
+
+
     public SmbComponent(CamelContext context) {
         super(context);
     }
