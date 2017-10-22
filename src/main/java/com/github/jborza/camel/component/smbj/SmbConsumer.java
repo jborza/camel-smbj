@@ -28,18 +28,36 @@ public class SmbConsumer extends GenericFileConsumer<File> {
 
     @Override
     protected boolean pollDirectory(String fileName, List<GenericFile<File>> fileList, int depth) {
-
         if (log.isTraceEnabled()) {
             log.trace("pollDirectory() running. My delay is [" + this.getDelay() + "] and my strategy is [" + this.getPollStrategy().getClass().toString() + "]");
             log.trace("pollDirectory() fileName[" + fileName + "]");
         }
+        depth++;
+
+        SmbOperations ops = (SmbOperations) operations;
+        boolean currentFileIsDirectory = false;
 
         //TODO doing 1 level just now
-        SmbOperations ops = (SmbOperations) operations;
         List<FileIdBothDirectoryInformation> smbFiles = getOperations().listFilesSpecial(fileName);
         for (FileIdBothDirectoryInformation f : smbFiles) {
+            if (!canPollMoreFiles(fileList)) {
+                return false;
+            }
             GenericFile<File> gf = asGenericFile(f);
-            fileList.add(gf);
+            if (gf.isDirectory()) {
+                if (endpoint.isRecursive() && depth < endpoint.getMaxDepth()) {
+                    //recursive scan of the subdirectory
+                    pollDirectory(gf.getFileName(), fileList, depth);
+                }
+            }
+            else{
+                if(depth < endpoint.getMinDepth())
+                    continue;
+                //if (isValidFile(gf, false, smbFiles)) {
+                //      fileList.add(gf);
+                //}
+                fileList.add(gf);
+            }
         }
         return true;
 
@@ -83,7 +101,7 @@ public class SmbConsumer extends GenericFileConsumer<File> {
 
     @Override
     protected void updateFileHeaders(GenericFile<File> genericFile, Message message) {
-        // TODO
+        //TODO which headers?
     }
 
     private GenericFile<File> asGenericFile(FileIdBothDirectoryInformation info) {
@@ -97,21 +115,13 @@ public class SmbConsumer extends GenericFileConsumer<File> {
         f.setLastModified(info.getLastWriteTime().toEpochMillis());
         f.setFileName(currentRelativePath + info.getFileName());
         f.setRelativeFilePath(info.getFileName());
-
+        boolean isDirectory = (info.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_DIRECTORY) == SmbConstants.FILE_ATTRIBUTE_DIRECTORY;
+        f.setDirectory(isDirectory);
         return f;
     }
 
     @Override
     protected boolean isMatched(GenericFile<File> file, String doneFileName, List<File> files) {
-//        String onlyName = FileUtil.stripPath(doneFileName);
-//
-//        for (DiskEntry f : files) {
-//            if (f.getFileInformation().getNameInformation().equals(onlyName)) {
-//                return true;
-//            }
-//        }
-//
-//        log.trace("Done file: {} does not exist", doneFileName);
-        return false;
+        return true;
     }
 }

@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+
 import com.hierynomus.smbj.share.File;
 
 import static com.hierynomus.mssmb2.SMB2CreateDisposition.FILE_CREATE;
@@ -29,8 +30,10 @@ public class SmbOperations implements GenericFileOperations<File> {
     private final SMBClient client;
     private Session session;
     private GenericFileEndpoint<File> endpoint;
-    
-    public SmbOperations(SMBClient client){this.client = client;}
+
+    public SmbOperations(SMBClient client) {
+        this.client = client;
+    }
 
     @Override
     public void setEndpoint(GenericFileEndpoint<File> genericFileEndpoint) {
@@ -55,17 +58,17 @@ public class SmbOperations implements GenericFileOperations<File> {
     @Override
     public boolean buildDirectory(String directory, boolean absolute) throws GenericFileOperationFailedException {
         login();
-        SmbConfiguration config = ((SmbConfiguration)endpoint.getConfiguration());
+        SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
 
         DiskShare share = (DiskShare) session.connectShare(config.getShare());
 
         Path path = Paths.get(directory);
         int len = path.getNameCount();
-        for(int i = 0; i < len; i++) {
-            Path partialPath = path.subpath(0, i+1);
-            String pathAsString =partialPath.toString();
+        for (int i = 0; i < len; i++) {
+            Path partialPath = path.subpath(0, i + 1);
+            String pathAsString = partialPath.toString();
             boolean exists = share.folderExists(pathAsString);
-            if(exists == false)
+            if (exists == false)
                 share.mkdir(pathAsString);
         }
 
@@ -73,7 +76,7 @@ public class SmbOperations implements GenericFileOperations<File> {
     }
 
     public static int copy(InputStream input, OutputStream output) throws IOException {
-        return copy((InputStream)input, (OutputStream)output, 4096);
+        return copy((InputStream) input, (OutputStream) output, 4096);
     }
 
     public static int copy(InputStream input, OutputStream output, int bufferSize) throws IOException {
@@ -100,7 +103,7 @@ public class SmbOperations implements GenericFileOperations<File> {
         int n = input.read(buffer);
 
         int total;
-        for(total = 0; -1 != n; n = input.read(buffer)) {
+        for (total = 0; -1 != n; n = input.read(buffer)) {
             output.write(buffer, 0, n);
             if (flushOnEachWrite) {
                 output.flush();
@@ -122,18 +125,18 @@ public class SmbOperations implements GenericFileOperations<File> {
         boolean result;
         try {
             os = new ByteArrayOutputStream();
-            GenericFile<File> target = (GenericFile<File>)exchange.getProperty(FileComponent.FILE_EXCHANGE_FILE);
+            GenericFile<File> target = (GenericFile<File>) exchange.getProperty(FileComponent.FILE_EXCHANGE_FILE);
             ObjectHelper.notNull(target, "Exchange should have the " + FileComponent.FILE_EXCHANGE_FILE + " set");
             target.setBody(os);
 
 
             login();
-            SmbConfiguration config = ((SmbConfiguration)endpoint.getConfiguration());
+            SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
 
             DiskShare share = (DiskShare) session.connectShare(config.getShare());
-            File f = share.openFile(name.replace('/','\\'), EnumSet.of(AccessMask.GENERIC_READ),null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN,null);
+            File f = share.openFile(name.replace('/', '\\'), EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
             InputStream is = f.getInputStream();
-            copy(is,os);
+            copy(is, os);
             return true;
         } catch (IOException e) {
             throw new GenericFileOperationFailedException("Cannot retrieve file: " + name, e);
@@ -169,22 +172,25 @@ public class SmbOperations implements GenericFileOperations<File> {
         return null;
     }
 
-    private final static long FILE_ATTRIBUTE_DIRECTORY = 16L;
 
+
+    //TODO this is not really nice, as we should have a class that represents the file / directory as our main generic parameter instead of File
     public List<FileIdBothDirectoryInformation> listFilesSpecial(String path) throws GenericFileOperationFailedException {
         //TODO replace with a nicer class
         List<FileIdBothDirectoryInformation> files = new ArrayList<FileIdBothDirectoryInformation>();
         try {
             login();
-            SmbConfiguration config = ((SmbConfiguration)endpoint.getConfiguration());
+            SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
 
             DiskShare share = (DiskShare) session.connectShare(config.getShare());
-
             for (FileIdBothDirectoryInformation f : share.list(config.getPath())) {
                 LoggerFactory.getLogger(this.getClass()).debug(f.getFileName());
-                boolean isDirectory = (f.getFileAttributes() & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
-                if(isDirectory)
-                    continue;
+                boolean isDirectory = (f.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_DIRECTORY) == SmbConstants.FILE_ATTRIBUTE_DIRECTORY;
+                if (isDirectory) {
+                    //skip special directories . and ..
+                    if(f.getFileName().equals(".") || f.getFileName().equals(".."))
+                        continue;
+                }
                 files.add(f);
             }
         } catch (Exception e) {
@@ -195,38 +201,17 @@ public class SmbOperations implements GenericFileOperations<File> {
 
     @Override
     public List<File> listFiles(String path) throws GenericFileOperationFailedException {
-        String listPath = getDirPath(path);
-        List<File> files = new ArrayList<File>();
-        try {
-            login();
-            SmbConfiguration config = ((SmbConfiguration)endpoint.getConfiguration());
-
-            DiskShare share = (DiskShare) session.connectShare(config.getShare());
-
-            for (FileIdBothDirectoryInformation f : share.list(config.getPath())) {
-                LoggerFactory.getLogger(this.getClass()).debug(f.getFileName());
-                boolean isDirectory = false;
-                if((f.getFileAttributes() & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-                    isDirectory = true;
-                System.out.println((isDirectory?"DIR ":"FILE")+" - "+ f.getFileName());
-                //files.add((File)f);
-                //TODO list files
-                //File file= new File(f.getFileId(),f.getFileName(),share);
-
-            }
-        } catch (Exception e) {
-            throw new GenericFileOperationFailedException("Could not get files " + e.getMessage(), e);
-        }
-        return files;
+        //TODO implement with our proper data class
+        return null;
     }
 
     private String getPath(String pathEnd) {
-        String path = ((SmbConfiguration)endpoint.getConfiguration()).getSmbHostPath() + pathEnd;
+        String path = ((SmbConfiguration) endpoint.getConfiguration()).getSmbHostPath() + pathEnd;
         return path.replace('\\', '/');
     }
 
     private String getDirPath(String pathEnd) {
-        String path = ((SmbConfiguration)endpoint.getConfiguration()).getSmbHostPath() + pathEnd;
+        String path = ((SmbConfiguration) endpoint.getConfiguration()).getSmbHostPath() + pathEnd;
         if (!path.endsWith("/")) {
             path = path + "/";
         }
@@ -234,7 +219,7 @@ public class SmbOperations implements GenericFileOperations<File> {
     }
 
     public void login() {
-        SmbConfiguration config = ((SmbConfiguration)endpoint.getConfiguration());
+        SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
 
         String domain = config.getDomain();
         String username = config.getUsername();
@@ -243,8 +228,7 @@ public class SmbOperations implements GenericFileOperations<File> {
         try {
             Connection connection = client.connect(config.getHost());
             session = connection.authenticate(new AuthenticationContext(username, password.toCharArray(), domain));
-        }
-        catch(IOException e){
+        } catch (IOException e) {
             //TODO what now?
         }
     }
@@ -258,11 +242,11 @@ public class SmbOperations implements GenericFileOperations<File> {
             inputStream = exchange.getIn().getMandatoryBody(InputStream.class);
 
             login();
-            SmbConfiguration config = ((SmbConfiguration)endpoint.getConfiguration());
+            SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
 
             DiskShare share = (DiskShare) session.connectShare(config.getShare());
-            GenericFile<File> inputFile = (GenericFile<File>)exchange.getIn().getBody();
-            Path path = Paths.get(config.getPath(),inputFile.getRelativeFilePath());
+            GenericFile<File> inputFile = (GenericFile<File>) exchange.getIn().getBody();
+            Path path = Paths.get(config.getPath(), inputFile.getRelativeFilePath());
             File file = share.openFile(path.toString(), EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, FILE_CREATE, null);
 
             OutputStream smbout = file.getOutputStream();
@@ -282,4 +266,4 @@ public class SmbOperations implements GenericFileOperations<File> {
         }
     }
 
-    }
+}
