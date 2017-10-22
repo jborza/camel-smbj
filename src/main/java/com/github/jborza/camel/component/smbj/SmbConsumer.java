@@ -35,7 +35,6 @@ public class SmbConsumer extends GenericFileConsumer<File> {
         depth++;
 
         SmbOperations ops = (SmbOperations) operations;
-        boolean currentFileIsDirectory = false;
 
         //TODO doing 1 level just now
         List<FileIdBothDirectoryInformation> smbFiles = getOperations().listFilesSpecial(fileName);
@@ -43,15 +42,15 @@ public class SmbConsumer extends GenericFileConsumer<File> {
             if (!canPollMoreFiles(fileList)) {
                 return false;
             }
-            GenericFile<File> gf = asGenericFile(f);
+            GenericFile<File> gf = asGenericFile(fileName, f);
             if (gf.isDirectory()) {
                 if (endpoint.isRecursive() && depth < endpoint.getMaxDepth()) {
                     //recursive scan of the subdirectory
-                    pollDirectory(gf.getFileName(), fileList, depth);
+                    String subDirName = fileName + "/" + gf.getFileName();
+                    pollDirectory(subDirName, fileList, depth);
                 }
-            }
-            else{
-                if(depth < endpoint.getMinDepth())
+            } else {
+                if (depth < endpoint.getMinDepth())
                     continue;
                 //if (isValidFile(gf, false, smbFiles)) {
                 //      fileList.add(gf);
@@ -60,43 +59,6 @@ public class SmbConsumer extends GenericFileConsumer<File> {
             }
         }
         return true;
-
-//        List<DiskEntry> smbFiles;
-//        boolean currentFileIsDir = false;
-//        smbFiles = operations.listFiles(fileName);
-//        for (DiskEntry smbFile : smbFiles) {
-//            if (!canPollMoreFiles(fileList)) {
-//                return false;
-//            }
-//            try {
-//                if (smbFile.isDirectory()) {
-//                    currentFileIsDir = true;
-//                } else {
-//                    currentFileIsDir = false;
-//                }
-//            } catch (SmbException e1) {
-//                throw ObjectHelper.wrapRuntimeCamelException(e1);
-//            }
-//            if (currentFileIsDir) {
-//                if (endpoint.isRecursive()) {
-//                    currentRelativePath = smbFile.getName().split("/")[0] + "/";
-//                    int nextDepth = depth++;
-//                    pollDirectory(fileName + "/" + smbFile.getName(), fileList, nextDepth);
-//                } else {
-//                    currentRelativePath = "";
-//                }
-//            } else {
-//                try {
-//                    GenericFile<DiskEntry> genericFile = asGenericFile(fileName, smbFile);
-//                    if (isValidFile(genericFile, false, smbFiles)) {
-//                        fileList.add(asGenericFile(fileName, smbFile));
-//                    }
-//                } catch (IOException e) {
-//                    throw ObjectHelper.wrapRuntimeCamelException(e);
-//                }
-//            }
-//        }
-//        return true;
     }
 
     @Override
@@ -104,9 +66,9 @@ public class SmbConsumer extends GenericFileConsumer<File> {
         //TODO which headers?
     }
 
-    private GenericFile<File> asGenericFile(FileIdBothDirectoryInformation info) {
+    private GenericFile<File> asGenericFile(String path, FileIdBothDirectoryInformation info) {
         GenericFile<File> f = new GenericFile<File>();
-        f.setAbsoluteFilePath(endpointPath + "/" + info.getFileName());
+        f.setAbsoluteFilePath(path + f.getFileSeparator() + info.getFileName());
         f.setAbsolute(true);
         f.setEndpointPath(endpointPath);
         f.setFileNameOnly(info.getFileName());

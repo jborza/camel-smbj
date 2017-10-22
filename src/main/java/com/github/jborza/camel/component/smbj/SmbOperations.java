@@ -9,6 +9,7 @@ import com.hierynomus.smbj.auth.AuthenticationContext;
 import com.hierynomus.smbj.connection.Connection;
 import com.hierynomus.smbj.session.Session;
 import com.hierynomus.smbj.share.DiskShare;
+import com.hierynomus.smbj.share.File;
 import org.apache.camel.Exchange;
 import org.apache.camel.component.file.*;
 import org.apache.camel.util.IOHelper;
@@ -21,8 +22,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-
-import com.hierynomus.smbj.share.File;
 
 import static com.hierynomus.mssmb2.SMB2CreateDisposition.FILE_CREATE;
 
@@ -47,7 +46,11 @@ public class SmbOperations implements GenericFileOperations<File> {
 
     @Override
     public boolean existsFile(String name) throws GenericFileOperationFailedException {
-        return false;
+        //TODO test
+        login();
+        SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
+        DiskShare share = (DiskShare) session.connectShare(config.getShare());
+        return share.fileExists(name);
     }
 
     @Override
@@ -76,6 +79,7 @@ public class SmbOperations implements GenericFileOperations<File> {
     }
 
     public static int copy(InputStream input, OutputStream output) throws IOException {
+        //TODO maybe we could default to bufferSize option of the endpoint
         return copy((InputStream) input, (OutputStream) output, 4096);
     }
 
@@ -129,12 +133,17 @@ public class SmbOperations implements GenericFileOperations<File> {
             ObjectHelper.notNull(target, "Exchange should have the " + FileComponent.FILE_EXCHANGE_FILE + " set");
             target.setBody(os);
 
-
             login();
             SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
 
             DiskShare share = (DiskShare) session.connectShare(config.getShare());
-            File f = share.openFile(name.replace('/', '\\'), EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
+            String path = name;
+            //TODO extract, the same happening in listFiles
+            path = path.replace("/", "\\");
+            //strip share name from path
+            path = path.replaceFirst("^" + config.getShare() + "\\\\", "");
+
+            File f = share.openFile(path, EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
             InputStream is = f.getInputStream();
             copy(is, os);
             return true;
@@ -172,8 +181,6 @@ public class SmbOperations implements GenericFileOperations<File> {
         return null;
     }
 
-
-
     //TODO this is not really nice, as we should have a class that represents the file / directory as our main generic parameter instead of File
     public List<FileIdBothDirectoryInformation> listFilesSpecial(String path) throws GenericFileOperationFailedException {
         //TODO replace with a nicer class
@@ -181,9 +188,11 @@ public class SmbOperations implements GenericFileOperations<File> {
         try {
             login();
             SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
-
             DiskShare share = (DiskShare) session.connectShare(config.getShare());
-            for (FileIdBothDirectoryInformation f : share.list(config.getPath())) {
+            path = path.replace("/", "\\");
+            //strip share name from path
+            path = path.replaceFirst("^" + config.getShare() + "\\\\", "");
+            for (FileIdBothDirectoryInformation f : share.list(path)) {
                 LoggerFactory.getLogger(this.getClass()).debug(f.getFileName());
                 boolean isDirectory = (f.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_DIRECTORY) == SmbConstants.FILE_ATTRIBUTE_DIRECTORY;
                 if (isDirectory) {
@@ -225,6 +234,9 @@ public class SmbOperations implements GenericFileOperations<File> {
         String username = config.getUsername();
         String password = config.getPassword();
 
+        if (session != null) {
+            return;
+        }
         try {
             Connection connection = client.connect(config.getHost());
             session = connection.authenticate(new AuthenticationContext(username, password.toCharArray(), domain));

@@ -37,6 +37,8 @@ public class SmbProducer extends GenericFileProducer<File> {
         exchange.getIn().setHeader(Exchange.FILE_NAME_PRODUCED, target);
     }
 
+    //TODO override createFileName to be compliant with options: flatten, etc
+
     @Override
     public void writeFile(Exchange exchange, String fileName) throws GenericFileOperationFailedException {
         if (log.isDebugEnabled()) {
