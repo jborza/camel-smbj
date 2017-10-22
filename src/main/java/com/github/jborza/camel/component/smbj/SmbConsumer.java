@@ -19,10 +19,10 @@ public class SmbConsumer extends GenericFileConsumer<File> {
     public SmbConsumer(GenericFileEndpoint<File> endpoint, Processor processor, GenericFileOperations<File> operations) {
         super(endpoint, processor, operations);
         SmbConfiguration config = (SmbConfiguration) endpoint.getConfiguration();
-        this.endpointPath = config.getPath();
+        this.endpointPath = config.getShare() + "\\" + config.getPath();
     }
 
-    private SmbOperations getOperations(){
+    private SmbOperations getOperations() {
         return (SmbOperations) operations;
     }
 
@@ -35,10 +35,9 @@ public class SmbConsumer extends GenericFileConsumer<File> {
         }
 
         //TODO doing 1 level just now
-        SmbOperations ops = (SmbOperations)operations;
+        SmbOperations ops = (SmbOperations) operations;
         List<FileIdBothDirectoryInformation> smbFiles = getOperations().listFilesSpecial(fileName);
-        for(FileIdBothDirectoryInformation f : smbFiles)
-        {
+        for (FileIdBothDirectoryInformation f : smbFiles) {
             GenericFile<File> gf = asGenericFile(f);
             fileList.add(gf);
         }
@@ -87,16 +86,18 @@ public class SmbConsumer extends GenericFileConsumer<File> {
         // TODO
     }
 
-    private GenericFile<File> asGenericFile(FileIdBothDirectoryInformation info){
+    private GenericFile<File> asGenericFile(FileIdBothDirectoryInformation info) {
         GenericFile<File> f = new GenericFile<File>();
-        f.setRelativeFilePath(info.getFileName());
+        f.setAbsoluteFilePath(endpointPath + "/" + info.getFileName());
         f.setAbsolute(true);
         f.setEndpointPath(endpointPath);
-        f.setAbsoluteFilePath(endpointPath+"/"+info.getFileName());
-//        f.setAbsoluteFilePath(path);
-        //f.setFileLength
-        //f.setFileNameOnly
-        //f.setFileName
+        f.setFileNameOnly(info.getFileName());
+        f.setFileLength(info.getEndOfFile());
+        //INFO not setting setFile
+        f.setLastModified(info.getLastWriteTime().toEpochMillis());
+        f.setFileName(currentRelativePath + info.getFileName());
+        f.setRelativeFilePath(info.getFileName());
+
         return f;
     }
 
