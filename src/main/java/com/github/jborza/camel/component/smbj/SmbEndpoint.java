@@ -11,7 +11,7 @@ import org.apache.camel.component.file.GenericFileProducer;
 import org.apache.camel.impl.DefaultExchange;
 import org.apache.camel.spi.UriEndpoint;
 
-@UriEndpoint(scheme = "smb2", title = "SMBJ", syntax = "smb3://user@server.example.com/sharename?password=secret&localWorkDirectory=/tmp", consumerClass = SmbConsumer.class)
+@UriEndpoint(scheme = "smb2", title = "SMBJ", syntax = "smb2://user@server.example.com/sharename?password=secret&localWorkDirectory=/tmp", consumerClass = SmbConsumer.class)
 public class SmbEndpoint extends GenericFileEndpoint<File> {
     private boolean download = true;
 
