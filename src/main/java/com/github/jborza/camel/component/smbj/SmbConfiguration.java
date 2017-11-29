@@ -1,7 +1,7 @@
 package com.github.jborza.camel.component.smbj;
 
 import org.apache.camel.component.file.GenericFileConfiguration;
-import org.apache.camel.util.ObjectHelper;
+import org.apache.camel.util.StringHelper;
 
 import java.net.URI;
 
@@ -30,12 +30,12 @@ public class SmbConfiguration extends GenericFileConfiguration {
 
         if (userInfo != null) {
             if (userInfo.contains(DOMAIN_SEPARATOR)) {
-                setDomain(ObjectHelper.before(userInfo, DOMAIN_SEPARATOR));
-                userInfo = ObjectHelper.after(userInfo, DOMAIN_SEPARATOR);
+                setDomain(StringHelper.before(userInfo, DOMAIN_SEPARATOR));
+                userInfo = StringHelper.after(userInfo, DOMAIN_SEPARATOR);
             }
             if (userInfo.contains(USER_PASS_SEPARATOR)) {
-                setUsername(ObjectHelper.before(userInfo, USER_PASS_SEPARATOR));
-                setPassword(ObjectHelper.after(userInfo, USER_PASS_SEPARATOR));
+                setUsername(StringHelper.before(userInfo, USER_PASS_SEPARATOR));
+                setPassword(StringHelper.after(userInfo, USER_PASS_SEPARATOR));
             } else {
                 setUsername(userInfo);
             }
@@ -51,7 +51,7 @@ public class SmbConfiguration extends GenericFileConfiguration {
     }
 
     public String getSmbPath() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         buffer.append("smb://");
         buffer.append(getHost());
         if (getPort() > 0) {
@@ -62,7 +62,7 @@ public class SmbConfiguration extends GenericFileConfiguration {
     }
 
     public String getSmbHostPath() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         buffer.append("smb://");
         buffer.append(getHost());
         if (getPort() > 0) {

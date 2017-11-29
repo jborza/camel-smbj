@@ -13,8 +13,8 @@ import java.util.List;
 
 public class SmbConsumer extends GenericFileConsumer<File> {
 
-    private String endpointPath;
-    private String currentRelativePath = "";
+    private final String endpointPath;
+    private final String currentRelativePath = "";
 
     public SmbConsumer(GenericFileEndpoint<File> endpoint, Processor processor, GenericFileOperations<File> operations) {
         super(endpoint, processor, operations);
@@ -67,7 +67,7 @@ public class SmbConsumer extends GenericFileConsumer<File> {
     }
 
     private GenericFile<File> asGenericFile(String path, FileIdBothDirectoryInformation info) {
-        GenericFile<File> f = new GenericFile<File>();
+        GenericFile<File> f = new GenericFile<>();
         f.setAbsoluteFilePath(path + f.getFileSeparator() + info.getFileName());
         f.setAbsolute(true);
         f.setEndpointPath(endpointPath);

@@ -8,7 +8,7 @@ URI format
 
 >   smb2://[[[domain;]username[:password]@]server[:port]/[[share/[dir/]]]][?options]
 
-Where share represents the share to connect to and dir is optionaly any underlying directory. Can contain nested folders.
+Where share represents the share to connect to and dir is optionally any underlying directory. Can contain nested folders.
 You can append query options to the URI in the following format, ?option=value&option=value&...
 This component uses the [SMBJ library](https://github.com/hierynomus/smbj) for the actual SMB work.
 

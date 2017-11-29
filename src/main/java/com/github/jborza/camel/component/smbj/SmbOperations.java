@@ -184,7 +184,7 @@ public class SmbOperations implements GenericFileOperations<File> {
     //TODO this is not really nice, as we should have a class that represents the file / directory as our main generic parameter instead of File
     public List<FileIdBothDirectoryInformation> listFilesSpecial(String path) throws GenericFileOperationFailedException {
         //TODO replace with a nicer class
-        List<FileIdBothDirectoryInformation> files = new ArrayList<FileIdBothDirectoryInformation>();
+        List<FileIdBothDirectoryInformation> files = new ArrayList<>();
         try {
             login();
             SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
