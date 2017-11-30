@@ -65,6 +65,10 @@ public class SmbOperations implements GenericFileOperations<File> {
 
         DiskShare share = (DiskShare) session.connectShare(config.getShare());
 
+        //strip share name from the beginning of directory
+        String shareName = config.getShare();
+        directory = directory.replaceFirst("^"+shareName,"");
+
         Path path = Paths.get(directory);
         int len = path.getNameCount();
         for (int i = 0; i < len; i++) {
@@ -259,7 +263,8 @@ public class SmbOperations implements GenericFileOperations<File> {
             DiskShare share = (DiskShare) session.connectShare(config.getShare());
             GenericFile<File> inputFile = (GenericFile<File>) exchange.getIn().getBody();
             Path path = Paths.get(config.getPath(), inputFile.getRelativeFilePath());
-            File file = share.openFile(path.toString(), EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, FILE_CREATE, null);
+            String pathAsString = normalizePath(path.toString());
+            File file = share.openFile(pathAsString, EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, FILE_CREATE, null);
 
             OutputStream smbout = file.getOutputStream();
             byte[] buf = new byte[512 * 1024];
@@ -276,6 +281,10 @@ public class SmbOperations implements GenericFileOperations<File> {
         } finally {
             IOHelper.close(inputStream, "store: " + storeName);
         }
+    }
+
+    String normalizePath(String path){
+        return path.replace("/","\\");
     }
 
 }
