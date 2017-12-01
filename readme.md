@@ -1,6 +1,7 @@
 Camel SMBJ Component
 =========================
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ea681a23c98d4b1db9d8322393eabb17)](https://www.codacy.com/app/jborza/camel-smbj?utm_source=github.com&utm_medium=referral&utm_content=jborza/camel-smbj&utm_campaign=badger)
 [![Build Status](https://travis-ci.org/jborza/camel-smbj.svg?branch=master)](https://travis-ci.org/jborza/camel-smbj)
 
 This component is intended to be a drop-in replacement for [camel-jcifs component](http://camel.apache.org/jcifs.html).
