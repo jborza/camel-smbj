@@ -67,9 +67,9 @@ public class SmbOperations implements GenericFileOperations<File> {
 
         //strip share name from the beginning of directory
         String shareName = config.getShare();
-        directory = directory.replaceFirst("^"+shareName,"");
+        String directoryNormalized = directory.replaceFirst("^"+shareName,"");
 
-        Path path = Paths.get(directory);
+        Path path = Paths.get(directoryNormalized);
         int len = path.getNameCount();
         for (int i = 0; i < len; i++) {
             Path partialPath = path.subpath(0, i + 1);
@@ -130,7 +130,6 @@ public class SmbOperations implements GenericFileOperations<File> {
     @Override
     public boolean retrieveFile(String name, Exchange exchange) throws GenericFileOperationFailedException {
         OutputStream os = null;
-        boolean result;
         try {
             os = new ByteArrayOutputStream();
             GenericFile<File> target = (GenericFile<File>) exchange.getProperty(FileComponent.FILE_EXCHANGE_FILE);
@@ -223,14 +222,6 @@ public class SmbOperations implements GenericFileOperations<File> {
         return path.replace('\\', '/');
     }
 
-    private String getDirPath(String pathEnd) {
-        String path = ((SmbConfiguration) endpoint.getConfiguration()).getSmbHostPath() + pathEnd;
-        if (!path.endsWith("/")) {
-            path = path + "/";
-        }
-        return path.replace('\\', '/');
-    }
-
     public void login() {
         SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
 
@@ -283,7 +274,7 @@ public class SmbOperations implements GenericFileOperations<File> {
         }
     }
 
-    String normalizePath(String path){
+    private String normalizePath(String path){
         return path.replace("/","\\");
     }
 

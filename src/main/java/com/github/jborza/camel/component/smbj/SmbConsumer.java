@@ -36,7 +36,6 @@ public class SmbConsumer extends GenericFileConsumer<File> {
 
         SmbOperations ops = (SmbOperations) operations;
 
-        //TODO doing 1 level just now
         List<FileIdBothDirectoryInformation> smbFiles = getOperations().listFilesSpecial(fileName);
         for (FileIdBothDirectoryInformation f : smbFiles) {
             if (!canPollMoreFiles(fileList)) {
