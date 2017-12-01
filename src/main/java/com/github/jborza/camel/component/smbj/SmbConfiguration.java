@@ -47,7 +47,10 @@ public class SmbConfiguration extends GenericFileConfiguration {
         String[] segments = uri.getPath().split("/");
         if(segments.length > 1) //first one is "/"
             setShare(segments[1]);
-        setPath(uri.getPath().replace("/"+getShare()+"/",""));
+        String path =uri.getPath().replace("/"+getShare()+"/","");
+        if(!path.endsWith("/"))
+            path = path + "/";
+        setPath(path);
     }
 
     public String getSmbPath() {

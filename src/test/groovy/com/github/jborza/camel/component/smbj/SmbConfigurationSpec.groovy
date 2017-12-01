@@ -1,27 +1,70 @@
 import com.github.jborza.camel.component.smbj.SmbConfiguration
 import spock.lang.Specification
 
-class SmbConfigurationSpec extends Specification{
-    def "should correctly process domain, user and password"(){
-        given:
-        def uri = new URI("smb2://mydomain;user:password@127.0.0.1")
-        when:
-        def cfg = new SmbConfiguration(uri)
-        then:
-        cfg.getDomain()=="mydomain"
-        cfg.getUsername()=="user"
-        cfg.getPassword()=="password"
+class SmbConfigurationSpec extends Specification {
+    def "should correctly process domain, username and password"() {
+        expect:
+        def cfg = new SmbConfiguration(new URI(uri))
+        cfg.getUsername() == username
+        cfg.getPassword() == password
+        cfg.getDomain() == domain
+
+        where:
+        uri                                       | username | password   | domain
+        "smb2://mydomain;user:password@127.0.0.1" | "user"   | "password" | "mydomain"
+        "smb2://user:password@127.0.0.1"          | "user"   | "password" | null
+        "smb2://user@127.0.0.1"                   | "user"   | null       | null
     }
 
-    def "should correctly process user and password without domain"(){
-        given:
-        def uri = new URI("smb2://user:password@127.0.0.1")
-        when:
-        def cfg = new SmbConfiguration(uri)
-        then:
-        cfg.getDomain()==null
-        cfg.getUsername()=="user"
-        cfg.getPassword()=="password"
+    def "should process port"() {
+        expect:
+        def cfg = new SmbConfiguration(new URI(uri))
+        cfg.getPort() == port
+
+        where:
+        uri                                  | port
+        "smb2://127.0.0.1"                   | -1
+        "smb2://127.0.0.1:139"               | 139
+        "smb2://user:password@127.0.0.1:139" | 139
+        "smb2://a.computer.name:445"         | 445
+    }
+
+    def "should process hostname"() {
+        expect:
+        def cfg = new SmbConfiguration(new URI(uri))
+        cfg.getHost() == host
+
+        where:
+        uri                                          | host
+        "smb2://127.0.0.1"                           | "127.0.0.1"
+        "smb2://a.computer.name:139"                 | "a.computer.name"
+        "smb2://user:password@host:445/share/subdir" | "host"
+    }
+
+    def "should process share and path"() {
+        //smb://[[[domain;]username[:password]@]server[:port]/[[share/[dir/]]]][?options]
+        expect:
+        def cfg = new SmbConfiguration(new URI(uri))
+        cfg.getPath() == path
+
+        where:
+        uri                             | share   | path
+        "smb2://host/"                  | ""      | "/"
+        "smb2://host/share/"            | "share" | "/"
+        "smb2://host/share/dir/subdir/" | "share" | "dir/subdir/"
+    }
+
+    def getSmbHostPathTest() {
+        expect:
+        def cfg = new SmbConfiguration(new URI(uri))
+        cfg.getSmbHostPath() == hostPath
+
+        where:
+        uri                                                                 | hostPath
+        "smb2://host"                                                       | "smb://host/"
+        "smb2://host:139/folder/"                                           | "smb://host:139/"
+        "smb2://username:password@host:445/folder/"                         | "smb://host:445/"
+        "smb2://domain;username:password@a.server.com:445/folder/subfolder" | "smb://a.server.com:445/"
     }
 
 }
