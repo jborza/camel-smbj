@@ -73,7 +73,7 @@ public class SmbOperations implements GenericFileOperations<File> {
         int len = path.getNameCount();
         for (int i = 0; i < len; i++) {
             Path partialPath = path.subpath(0, i + 1);
-            String pathAsString = partialPath.toString();
+            String pathAsString = normalizePath(partialPath.toString());
             boolean exists = share.folderExists(pathAsString);
             if (exists == false)
                 share.mkdir(pathAsString);
@@ -264,8 +264,7 @@ public class SmbOperations implements GenericFileOperations<File> {
                 smbout.write(buf, 0, numRead);
             }
             smbout.close();
-            //TODO set last modified date to lastModifiedDate(exchange)
-            //file.setFileInformation(); ?
+            //TODO set last modified date to inputFile.getLastModified()
             return true;
         } catch (Exception e) {
             throw new GenericFileOperationFailedException("Cannot store file " + storeName, e);
@@ -274,6 +273,7 @@ public class SmbOperations implements GenericFileOperations<File> {
         }
     }
 
+    //TODO the same method in SmbProducer
     private String normalizePath(String path){
         return path.replace("/","\\");
     }

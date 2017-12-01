@@ -53,17 +53,6 @@ public class SmbConfiguration extends GenericFileConfiguration {
         setPath(path);
     }
 
-    public String getSmbPath() {
-        StringBuilder buffer = new StringBuilder();
-        buffer.append("smb://");
-        buffer.append(getHost());
-        if (getPort() > 0) {
-            buffer.append(":").append(getPort());
-        }
-        buffer.append(getPath());
-        return buffer.toString();
-    }
-
     public String getSmbHostPath() {
         StringBuilder buffer = new StringBuilder();
         buffer.append("smb://");
@@ -128,16 +117,12 @@ public class SmbConfiguration extends GenericFileConfiguration {
         return path;
     }
 
-    // TODO: give this dirty handling some thinking.
-    @Override
-    public String getDirectory() {
-        String s = super.getDirectory();
-        s = s.replace('\\', '/');
-        // we always need /
-        // this is a bit dirty
-
-        return s;
-    }
+//    @Override
+//    public String getDirectory() {
+//        //need to replace back slashes with forward slashes
+//        String directory = super.getDirectory();
+//        return  directory.replace('\\', '/');
+//    }
 
 }
 

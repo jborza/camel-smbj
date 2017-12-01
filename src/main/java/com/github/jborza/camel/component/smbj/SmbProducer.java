@@ -9,6 +9,8 @@ import org.apache.camel.component.file.GenericFileProducer;
 import org.apache.camel.util.ExchangeHelper;
 import org.apache.camel.util.FileUtil;
 
+import java.util.regex.Pattern;
+
 public class SmbProducer extends GenericFileProducer<File> {
 
     private String endpointPath;
@@ -45,19 +47,18 @@ public class SmbProducer extends GenericFileProducer<File> {
             log.debug("writeFile() fileName[" + fileName + "]");
         }
         if(endpoint.isAutoCreate()){
-            String name = FileUtil.normalizePath(fileName);
-            //TODO windows vs unix
-
+//            String name = convertToBackslashes(fileName);
             //strip the share name, as it's a special part of the name for us
             //TODO do this in a nicer place than
             String share = getEndpoint().getConfiguration().getShare();
-            name = name.replace(share+"\\","");
+            String sharePathElementPattern = "^" + share + Pattern.quote(java.io.File.separator);
+            String fileNameWithoutShare = fileName.replaceFirst(sharePathElementPattern, "");
 
-            java.io.File file = new java.io.File(name);
-            String directory = file.getParent();
+            java.io.File file = new java.io.File(fileNameWithoutShare);
+            String parentDirectory = file.getParent();
             boolean absolute = FileUtil.isAbsolute(file);
-            if (directory != null && !operations.buildDirectory(directory, absolute)) {
-                log.warn("Cannot build directory [" + directory + "] (could be because of denied permissions)");
+            if (parentDirectory != null && !operations.buildDirectory(parentDirectory, absolute)) {
+                log.warn("Cannot build directory [" + parentDirectory + "] (could be because of denied permissions)");
             }
         }
         // upload
@@ -71,6 +72,10 @@ public class SmbProducer extends GenericFileProducer<File> {
         if (log.isDebugEnabled()) {
             log.debug("Wrote [" + fileName + "] to [" + getEndpoint() + "]");
         }
+    }
+
+    private String convertToBackslashes(String path) {
+        return path.replace('/', '\\');
     }
 
         @Override
