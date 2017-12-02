@@ -14,7 +14,7 @@ public class SmbPathUtils {
     }
 
     private static String removeShareName(String path, String shareName, String separator) {
-        String sharePathElementPattern = "^" + shareName + Pattern.quote(java.io.File.separator);
+        String sharePathElementPattern = "^" + shareName + Pattern.quote(separator);
         return path.replaceFirst(sharePathElementPattern, "");
     }
 }
