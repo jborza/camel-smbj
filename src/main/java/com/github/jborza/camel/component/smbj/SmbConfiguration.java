@@ -116,13 +116,5 @@ public class SmbConfiguration extends GenericFileConfiguration {
     public String getPath() {
         return path;
     }
-
-//    @Override
-//    public String getDirectory() {
-//        //need to replace back slashes with forward slashes
-//        String directory = super.getDirectory();
-//        return  directory.replace('\\', '/');
-//    }
-
 }
 

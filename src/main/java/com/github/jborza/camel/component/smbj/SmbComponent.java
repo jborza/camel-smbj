@@ -14,7 +14,6 @@ public class SmbComponent extends GenericFileComponent<File> {
 
     }
 
-
     public SmbComponent(CamelContext context) {
         super(context);
     }

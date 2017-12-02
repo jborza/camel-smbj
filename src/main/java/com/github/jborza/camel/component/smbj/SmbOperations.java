@@ -73,7 +73,7 @@ public class SmbOperations implements GenericFileOperations<File> {
         int len = path.getNameCount();
         for (int i = 0; i < len; i++) {
             Path partialPath = path.subpath(0, i + 1);
-            String pathAsString = normalizePath(partialPath.toString());
+            String pathAsString = SmbPathUtils.convertToBackslashes(partialPath.toString());
             boolean exists = share.folderExists(pathAsString);
             if (exists == false)
                 share.mkdir(pathAsString);
@@ -141,10 +141,9 @@ public class SmbOperations implements GenericFileOperations<File> {
 
             DiskShare share = (DiskShare) session.connectShare(config.getShare());
             String path = name;
-            //TODO extract, the same happening in listFiles
-            path = path.replace("/", "\\");
+            path = SmbPathUtils.convertToBackslashes(path);
             //strip share name from path
-            path = path.replaceFirst("^" + config.getShare() + "\\\\", "");
+            path = SmbPathUtils.removeShareName(path, config.getShare(), true);
 
             File f = share.openFile(path, EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
             InputStream is = f.getInputStream();
@@ -192,9 +191,9 @@ public class SmbOperations implements GenericFileOperations<File> {
             login();
             SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
             DiskShare share = (DiskShare) session.connectShare(config.getShare());
-            path = path.replace("/", "\\");
+            path = SmbPathUtils.convertToBackslashes(path);
             //strip share name from path
-            path = path.replaceFirst("^" + config.getShare() + "\\\\", "");
+            path = SmbPathUtils.removeShareName(path, config.getShare(), true);
             for (FileIdBothDirectoryInformation f : share.list(path)) {
                 LoggerFactory.getLogger(this.getClass()).debug(f.getFileName());
                 boolean isDirectory = (f.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_DIRECTORY) == SmbConstants.FILE_ATTRIBUTE_DIRECTORY;
@@ -254,7 +253,7 @@ public class SmbOperations implements GenericFileOperations<File> {
             DiskShare share = (DiskShare) session.connectShare(config.getShare());
             GenericFile<File> inputFile = (GenericFile<File>) exchange.getIn().getBody();
             Path path = Paths.get(config.getPath(), inputFile.getRelativeFilePath());
-            String pathAsString = normalizePath(path.toString());
+            String pathAsString = SmbPathUtils.convertToBackslashes(path.toString());
             File file = share.openFile(pathAsString, EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, FILE_CREATE, null);
 
             OutputStream smbout = file.getOutputStream();
@@ -272,10 +271,4 @@ public class SmbOperations implements GenericFileOperations<File> {
             IOHelper.close(inputStream, "store: " + storeName);
         }
     }
-
-    //TODO the same method in SmbProducer
-    private String normalizePath(String path){
-        return path.replace("/","\\");
-    }
-
 }

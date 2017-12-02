@@ -1,5 +1,6 @@
 package com.github.jborza.camel.component.smbj;
 
+import com.hierynomus.smbj.common.SmbPath;
 import com.hierynomus.smbj.share.File;
 import org.apache.camel.Exchange;
 import org.apache.camel.component.file.GenericFileEndpoint;
@@ -47,12 +48,9 @@ public class SmbProducer extends GenericFileProducer<File> {
             log.debug("writeFile() fileName[" + fileName + "]");
         }
         if(endpoint.isAutoCreate()){
-//            String name = convertToBackslashes(fileName);
             //strip the share name, as it's a special part of the name for us
-            //TODO do this in a nicer place than
             String share = getEndpoint().getConfiguration().getShare();
-            String sharePathElementPattern = "^" + share + Pattern.quote(java.io.File.separator);
-            String fileNameWithoutShare = fileName.replaceFirst(sharePathElementPattern, "");
+            String fileNameWithoutShare = SmbPathUtils.removeShareName(fileName, share, false);
 
             java.io.File file = new java.io.File(fileNameWithoutShare);
             String parentDirectory = file.getParent();
@@ -72,10 +70,6 @@ public class SmbProducer extends GenericFileProducer<File> {
         if (log.isDebugEnabled()) {
             log.debug("Wrote [" + fileName + "] to [" + getEndpoint() + "]");
         }
-    }
-
-    private String convertToBackslashes(String path) {
-        return path.replace('/', '\\');
     }
 
         @Override
