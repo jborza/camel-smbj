@@ -30,7 +30,7 @@ class SmbPathUtilsSpec extends Specification {
         def path = Paths.get(share, "dir", "subdir").toString()
 
         when:
-        def result = SmbPathUtils.removeShareName(path, share, true)
+        def result = SmbPathUtils.removeShareName(path, share, false)
         then:
         result == Paths.get("dir", "subdir").toString()
         result.startsWith(share) == false
