@@ -1,7 +1,6 @@
 package com.github.jborza.camel.component.smbj;
 
-import com.hierynomus.msfscc.fileinformation.FileIdBothDirectoryInformation;
-import com.hierynomus.smbj.share.File;
+import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.Processor;
 import org.apache.camel.component.file.GenericFile;
@@ -11,12 +10,12 @@ import org.apache.camel.component.file.GenericFileOperations;
 
 import java.util.List;
 
-public class SmbConsumer extends GenericFileConsumer<File> {
+public class SmbConsumer extends GenericFileConsumer<SmbFile> {
 
     private final String endpointPath;
     private final String currentRelativePath = "";
 
-    public SmbConsumer(GenericFileEndpoint<File> endpoint, Processor processor, GenericFileOperations<File> operations) {
+    public SmbConsumer(GenericFileEndpoint<SmbFile> endpoint, Processor processor, GenericFileOperations<SmbFile> operations) {
         super(endpoint, processor, operations);
         SmbConfiguration config = (SmbConfiguration) endpoint.getConfiguration();
         this.endpointPath = config.getShare() + "\\" + config.getPath();
@@ -27,21 +26,20 @@ public class SmbConsumer extends GenericFileConsumer<File> {
     }
 
     @Override
-    protected boolean pollDirectory(String fileName, List<GenericFile<File>> fileList, int depth) {
+    protected boolean pollDirectory(String fileName, List<GenericFile<SmbFile>> fileList, int depth) {
         if (log.isTraceEnabled()) {
             log.trace("pollDirectory() running. My delay is [" + this.getDelay() + "] and my strategy is [" + this.getPollStrategy().getClass().toString() + "]");
             log.trace("pollDirectory() fileName[" + fileName + "]");
         }
         depth++;
 
-        SmbOperations ops = (SmbOperations) operations;
-
-        List<FileIdBothDirectoryInformation> smbFiles = getOperations().listFilesSpecial(fileName);
-        for (FileIdBothDirectoryInformation f : smbFiles) {
+        List<SmbFile> smbFiles = operations.listFiles(fileName);
+        for (SmbFile smbFile : smbFiles) {
+            //stop polling files if the limit is reached
             if (!canPollMoreFiles(fileList)) {
                 return false;
             }
-            GenericFile<File> gf = asGenericFile(fileName, f);
+            GenericFile<SmbFile> gf = asGenericFile(fileName, smbFile);
             if (gf.isDirectory()) {
                 if (endpoint.isRecursive() && depth < endpoint.getMaxDepth()) {
                     //recursive scan of the subdirectory
@@ -49,11 +47,11 @@ public class SmbConsumer extends GenericFileConsumer<File> {
                     pollDirectory(subDirName, fileList, depth);
                 }
             } else {
+                //conform to the minDepth parameter
                 if (depth < endpoint.getMinDepth())
                     continue;
-                //if (isValidFile(gf, false, smbFiles)) {
-                //      fileList.add(gf);
-                //}
+                //TODO see if this check is necessary
+                //if (isValidFile(gf, false, smbFiles))
                 fileList.add(gf);
             }
         }
@@ -61,28 +59,37 @@ public class SmbConsumer extends GenericFileConsumer<File> {
     }
 
     @Override
-    protected void updateFileHeaders(GenericFile<File> genericFile, Message message) {
-        //TODO which headers?
+    protected void updateFileHeaders(GenericFile<SmbFile> file, Message message) {
+        //note: copied from FtpConsumer
+        long length = file.getFile().getFileLength();
+        long modified = file.getLastModified();
+        file.setFileLength(length);
+        file.setLastModified(modified);
+        if (length >= 0) {
+            message.setHeader(Exchange.FILE_LENGTH, length);
+        }
+        if (modified >= 0) {
+            message.setHeader(Exchange.FILE_LAST_MODIFIED, modified);
+        }
     }
 
-    private GenericFile<File> asGenericFile(String path, FileIdBothDirectoryInformation info) {
-        GenericFile<File> f = new GenericFile<>();
+    private GenericFile<SmbFile> asGenericFile(String path, SmbFile info) {
+        GenericFile<SmbFile> f = new GenericFile<>();
         f.setAbsoluteFilePath(path + f.getFileSeparator() + info.getFileName());
         f.setAbsolute(true);
         f.setEndpointPath(endpointPath);
         f.setFileNameOnly(info.getFileName());
-        f.setFileLength(info.getEndOfFile());
-        //INFO not setting setFile
-        f.setLastModified(info.getLastWriteTime().toEpochMillis());
+        f.setFileLength(info.getFileLength());
+        f.setFile(info);
+        f.setLastModified(info.getLastModified());
         f.setFileName(currentRelativePath + info.getFileName());
         f.setRelativeFilePath(info.getFileName());
-        boolean isDirectory = (info.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_DIRECTORY) == SmbConstants.FILE_ATTRIBUTE_DIRECTORY;
-        f.setDirectory(isDirectory);
+        f.setDirectory(info.isDirectory());
         return f;
     }
 
     @Override
-    protected boolean isMatched(GenericFile<File> file, String doneFileName, List<File> files) {
+    protected boolean isMatched(GenericFile<SmbFile> file, String doneFileName, List<SmbFile> files) {
         return true;
     }
 }

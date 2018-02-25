@@ -1,6 +1,5 @@
 package com.github.jborza.camel.component.smbj;
 
-import com.hierynomus.smbj.share.File;
 import org.apache.camel.CamelContext;
 import org.apache.camel.component.file.GenericFileComponent;
 import org.apache.camel.component.file.GenericFileEndpoint;
@@ -8,7 +7,7 @@ import org.apache.camel.component.file.GenericFileEndpoint;
 import java.net.URI;
 import java.util.Map;
 
-public class SmbComponent extends GenericFileComponent<File> {
+public class SmbComponent extends GenericFileComponent<SmbFile> {
 
     public SmbComponent() {
 
@@ -27,7 +26,7 @@ public class SmbComponent extends GenericFileComponent<File> {
     }
 
     @Override
-    protected void afterPropertiesSet(GenericFileEndpoint<File> genericFileEndpoint) throws Exception {
+    protected void afterPropertiesSet(GenericFileEndpoint<SmbFile> genericFileEndpoint) throws Exception {
         //empty on purpose
     }
 

@@ -23,19 +23,23 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
+import static com.github.jborza.camel.component.smbj.SmbConstants.CURRENT_DIRECTORY;
+import static com.github.jborza.camel.component.smbj.SmbConstants.PARENT_DIRECTORY;
 import static com.hierynomus.mssmb2.SMB2CreateDisposition.FILE_CREATE;
 
-public class SmbOperations implements GenericFileOperations<File> {
+public class SmbOperations implements GenericFileOperations<SmbFile> {
+    public static final int DEFAULT_COPY_BUFFER_SIZE = 4096;
     private final SMBClient client;
     private Session session;
-    private GenericFileEndpoint<File> endpoint;
+    private GenericFileEndpoint<SmbFile> endpoint;
+    private static final int MAX_BUFFER_SIZE = 262144;
 
     public SmbOperations(SMBClient client) {
         this.client = client;
     }
 
     @Override
-    public void setEndpoint(GenericFileEndpoint<File> genericFileEndpoint) {
+    public void setEndpoint(GenericFileEndpoint<SmbFile> genericFileEndpoint) {
         this.endpoint = genericFileEndpoint;
     }
 
@@ -67,7 +71,7 @@ public class SmbOperations implements GenericFileOperations<File> {
 
         //strip share name from the beginning of directory
         String shareName = config.getShare();
-        String directoryNormalized = directory.replaceFirst("^"+shareName,"");
+        String directoryNormalized = directory.replaceFirst("^" + shareName, "");
 
         Path path = Paths.get(directoryNormalized);
         int len = path.getNameCount();
@@ -83,8 +87,7 @@ public class SmbOperations implements GenericFileOperations<File> {
     }
 
     public static int copy(InputStream input, OutputStream output) throws IOException {
-        //TODO maybe we could default to bufferSize option of the endpoint
-        return copy((InputStream) input, (OutputStream) output, 4096);
+        return copy(input, output, DEFAULT_COPY_BUFFER_SIZE);
     }
 
     public static int copy(InputStream input, OutputStream output, int bufferSize) throws IOException {
@@ -103,8 +106,8 @@ public class SmbOperations implements GenericFileOperations<File> {
             }
         }
 
-        if (bufferSize > 262144) {
-            bufferSize = 262144;
+        if (bufferSize > MAX_BUFFER_SIZE) {
+            bufferSize = MAX_BUFFER_SIZE;
         }
 
         byte[] buffer = new byte[bufferSize];
@@ -147,7 +150,8 @@ public class SmbOperations implements GenericFileOperations<File> {
 
             File f = share.openFile(path, EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
             InputStream is = f.getInputStream();
-            copy(is, os);
+
+            copy(is, os, endpoint.getBufferSize());
             return true;
         } catch (IOException e) {
             throw new GenericFileOperationFailedException("Cannot retrieve file: " + name, e);
@@ -179,7 +183,7 @@ public class SmbOperations implements GenericFileOperations<File> {
     }
 
     @Override
-    public List<File> listFiles() throws GenericFileOperationFailedException {
+    public List<SmbFile> listFiles() throws GenericFileOperationFailedException {
         return null;
     }
 
@@ -199,7 +203,7 @@ public class SmbOperations implements GenericFileOperations<File> {
                 boolean isDirectory = (f.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_DIRECTORY) == SmbConstants.FILE_ATTRIBUTE_DIRECTORY;
                 if (isDirectory) {
                     //skip special directories . and ..
-                    if(f.getFileName().equals(".") || f.getFileName().equals(".."))
+                    if (f.getFileName().equals(".") || f.getFileName().equals(".."))
                         continue;
                 }
                 files.add(f);
@@ -211,9 +215,38 @@ public class SmbOperations implements GenericFileOperations<File> {
     }
 
     @Override
-    public List<File> listFiles(String path) throws GenericFileOperationFailedException {
-        //TODO implement with our proper data class
-        return null;
+    public List<SmbFile> listFiles(String path) throws GenericFileOperationFailedException {
+
+        List<SmbFile> files = new ArrayList<>();
+        try {
+            login();
+            SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
+            DiskShare share = (DiskShare) session.connectShare(config.getShare());
+            path = SmbPathUtils.convertToBackslashes(path);
+            //strip share name from path
+            path = SmbPathUtils.removeShareName(path, config.getShare(), true);
+            for (FileIdBothDirectoryInformation f : share.list(path)) {
+                LoggerFactory.getLogger(this.getClass()).debug(f.getFileName());
+                boolean isDirectory = isDirectory(f);
+                if (isDirectory) {
+                    //skip special directories . and ..
+                    if (f.getFileName().equals(CURRENT_DIRECTORY) || f.getFileName().equals(PARENT_DIRECTORY))
+                        continue;
+                }
+                files.add(new SmbFile(isDirectory, f.getFileName(), f.getEndOfFile(), getLastModified(f)));
+            }
+        } catch (Exception e) {
+            throw new GenericFileOperationFailedException("Could not get files " + e.getMessage(), e);
+        }
+        return files;
+    }
+
+    private static boolean isDirectory(FileIdBothDirectoryInformation info) {
+        return (info.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_DIRECTORY) == SmbConstants.FILE_ATTRIBUTE_DIRECTORY;
+    }
+
+    private static long getLastModified(FileIdBothDirectoryInformation info) {
+        return info.getLastWriteTime().toEpochMillis();
     }
 
     private String getPath(String pathEnd) {
@@ -257,7 +290,7 @@ public class SmbOperations implements GenericFileOperations<File> {
             File file = share.openFile(pathAsString, EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, FILE_CREATE, null);
 
             OutputStream smbout = file.getOutputStream();
-            byte[] buf = new byte[512 * 1024];
+            byte[] buf = new byte[512 * 1024]; //TODO this should be parametrizable
             int numRead;
             while ((numRead = inputStream.read(buf)) >= 0) {
                 smbout.write(buf, 0, numRead);

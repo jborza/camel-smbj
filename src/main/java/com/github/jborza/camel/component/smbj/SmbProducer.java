@@ -1,7 +1,5 @@
 package com.github.jborza.camel.component.smbj;
 
-import com.hierynomus.smbj.common.SmbPath;
-import com.hierynomus.smbj.share.File;
 import org.apache.camel.Exchange;
 import org.apache.camel.component.file.GenericFileEndpoint;
 import org.apache.camel.component.file.GenericFileOperationFailedException;
@@ -10,13 +8,11 @@ import org.apache.camel.component.file.GenericFileProducer;
 import org.apache.camel.util.ExchangeHelper;
 import org.apache.camel.util.FileUtil;
 
-import java.util.regex.Pattern;
-
-public class SmbProducer extends GenericFileProducer<File> {
+public class SmbProducer extends GenericFileProducer<SmbFile> {
 
     private String endpointPath;
 
-    protected SmbProducer(GenericFileEndpoint<File> endpoint, GenericFileOperations<File> operations) {
+    protected SmbProducer(GenericFileEndpoint<SmbFile> endpoint, GenericFileOperations<SmbFile> operations) {
         super(endpoint, operations);
     }
 
@@ -35,7 +31,7 @@ public class SmbProducer extends GenericFileProducer<File> {
     protected void processExchange(Exchange exchange) throws Exception {
         String target = createFileName(exchange);
         writeFile(exchange, target);
-        // lets store the name we really used in the header, so end-users
+        // let's store the name we really used in the header, so end-users
         // can retrieve it
         exchange.getIn().setHeader(Exchange.FILE_NAME_PRODUCED, target);
     }
