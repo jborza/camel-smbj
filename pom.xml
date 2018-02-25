@@ -48,7 +48,7 @@
         <dependency>
             <groupId>com.hierynomus</groupId>
             <artifactId>smbj</artifactId>
-            <version>0.5.1</version>
+            <version>0.6.0</version>
         </dependency>
         <!-- logging -->
         <dependency>
