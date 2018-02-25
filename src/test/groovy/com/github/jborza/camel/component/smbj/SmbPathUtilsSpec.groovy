@@ -1,4 +1,5 @@
-import com.github.jborza.camel.component.smbj.SmbPathUtils
+package com.github.jborza.camel.component.smbj
+
 import spock.lang.Specification
 
 import java.nio.file.Paths

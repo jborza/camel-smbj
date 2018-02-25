@@ -14,7 +14,6 @@ import org.apache.camel.Exchange;
 import org.apache.camel.component.file.*;
 import org.apache.camel.util.IOHelper;
 import org.apache.camel.util.ObjectHelper;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -135,7 +134,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
         OutputStream os = null;
         try {
             os = new ByteArrayOutputStream();
-            GenericFile<File> target = (GenericFile<File>) exchange.getProperty(FileComponent.FILE_EXCHANGE_FILE);
+            GenericFile<SmbFile> target = (GenericFile<SmbFile>) exchange.getProperty(FileComponent.FILE_EXCHANGE_FILE);
             ObjectHelper.notNull(target, "Exchange should have the " + FileComponent.FILE_EXCHANGE_FILE + " set");
             target.setBody(os);
 
@@ -187,46 +186,18 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
         return null;
     }
 
-    //TODO this is not really nice, as we should have a class that represents the file / directory as our main generic parameter instead of File
-    public List<FileIdBothDirectoryInformation> listFilesSpecial(String path) throws GenericFileOperationFailedException {
-        //TODO replace with a nicer class
-        List<FileIdBothDirectoryInformation> files = new ArrayList<>();
-        try {
-            login();
-            SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
-            DiskShare share = (DiskShare) session.connectShare(config.getShare());
-            path = SmbPathUtils.convertToBackslashes(path);
-            //strip share name from path
-            path = SmbPathUtils.removeShareName(path, config.getShare(), true);
-            for (FileIdBothDirectoryInformation f : share.list(path)) {
-                LoggerFactory.getLogger(this.getClass()).debug(f.getFileName());
-                boolean isDirectory = (f.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_DIRECTORY) == SmbConstants.FILE_ATTRIBUTE_DIRECTORY;
-                if (isDirectory) {
-                    //skip special directories . and ..
-                    if (f.getFileName().equals(".") || f.getFileName().equals(".."))
-                        continue;
-                }
-                files.add(f);
-            }
-        } catch (Exception e) {
-            throw new GenericFileOperationFailedException("Could not get files " + e.getMessage(), e);
-        }
-        return files;
-    }
-
     @Override
     public List<SmbFile> listFiles(String path) throws GenericFileOperationFailedException {
-
+        String actualPath;
         List<SmbFile> files = new ArrayList<>();
         try {
             login();
             SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
             DiskShare share = (DiskShare) session.connectShare(config.getShare());
-            path = SmbPathUtils.convertToBackslashes(path);
+            actualPath = SmbPathUtils.convertToBackslashes(path);
             //strip share name from path
-            path = SmbPathUtils.removeShareName(path, config.getShare(), true);
-            for (FileIdBothDirectoryInformation f : share.list(path)) {
-                LoggerFactory.getLogger(this.getClass()).debug(f.getFileName());
+            actualPath = SmbPathUtils.removeShareName(actualPath, config.getShare(), true);
+            for (FileIdBothDirectoryInformation f : share.list(actualPath)) {
                 boolean isDirectory = isDirectory(f);
                 if (isDirectory) {
                     //skip special directories . and ..
@@ -284,7 +255,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
             SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
 
             DiskShare share = (DiskShare) session.connectShare(config.getShare());
-            GenericFile<File> inputFile = (GenericFile<File>) exchange.getIn().getBody();
+            GenericFile<SmbFile> inputFile = (GenericFile<SmbFile>) exchange.getIn().getBody();
             Path path = Paths.get(config.getPath(), inputFile.getRelativeFilePath());
             String pathAsString = SmbPathUtils.convertToBackslashes(path.toString());
             File file = share.openFile(pathAsString, EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, FILE_CREATE, null);

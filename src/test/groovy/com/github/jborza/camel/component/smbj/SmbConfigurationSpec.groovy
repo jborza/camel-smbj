@@ -1,4 +1,5 @@
-import com.github.jborza.camel.component.smbj.SmbConfiguration
+package com.github.jborza.camel.component.smbj
+
 import spock.lang.Specification
 
 class SmbConfigurationSpec extends Specification {
