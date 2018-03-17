@@ -9,10 +9,13 @@ import org.apache.camel.component.file.GenericFileEndpoint;
 import org.apache.camel.component.file.GenericFileProducer;
 import org.apache.camel.impl.DefaultExchange;
 import org.apache.camel.spi.UriEndpoint;
+import org.apache.camel.spi.UriParam;
 
 @UriEndpoint(scheme = "smb2", title = "SMBJ", syntax = "smb2://user@server.example.com/sharename?password=secret&localWorkDirectory=/tmp", consumerClass = SmbConsumer.class)
 public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
-    private boolean download = true;
+
+    @UriParam
+    protected boolean dfs;
 
     public SmbEndpoint(String uri, SmbComponent smbComponent, SmbConfiguration configuration) {
         super(uri, smbComponent);
@@ -54,6 +57,14 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
         return new SmbProducer(this, createSmbOperations());
     }
 
+    public boolean isDfs() {
+        return dfs;
+    }
+
+    public void setDfs(boolean dfsEnabled) {
+        this.dfs = dfsEnabled;
+    }
+
     @Override
     public Exchange createExchange(GenericFile<SmbFile> file) {
         Exchange answer = new DefaultExchange(this);
@@ -66,15 +77,23 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
     @SuppressWarnings({"rawtypes", "unchecked"})
     public SmbOperations createSmbOperations() {
 
-        SmbConfig config = SmbConfig
-                .builder()
-                .withMultiProtocolNegotiate(true)
-                .build();
+        SmbConfig config = createSmbConfig();
 
         SMBClient client = new SMBClient(config);
         SmbOperations operations = new SmbOperations(client);
         operations.setEndpoint(this);
         return operations;
+    }
+
+    private SmbConfig createSmbConfig() {
+        return SmbConfig
+                    .builder()
+                    .withMultiProtocolNegotiate(true)
+                    .withDfsEnabled(isDfs())
+                    .withReadBufferSize(5 * 1024 * 1024)
+                    .withTransactBufferSize(5 * 1024 * 1024)
+                    .withWriteBufferSize(5 * 1024 * 1024)
+                    .build();
     }
 
     @Override
@@ -95,18 +114,5 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
     @Override
     public boolean isSingleton() {
         return false;
-    }
-
-    public boolean isDownload() {
-        return download;
-    }
-
-    public void setDownload(boolean download) {
-        this.download = download;
-    }
-
-    @Override
-    protected String createDoneFileName(String fileName) {
-        return super.createDoneFileName(fileName);
     }
 }

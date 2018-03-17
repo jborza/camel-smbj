@@ -21,10 +21,6 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
         this.endpointPath = config.getShare() + "\\" + config.getPath();
     }
 
-    private SmbOperations getOperations() {
-        return (SmbOperations) operations;
-    }
-
     @Override
     protected boolean pollDirectory(String fileName, List<GenericFile<SmbFile>> fileList, int depth) {
         if (log.isTraceEnabled()) {
@@ -51,8 +47,8 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
                 if (depth < endpoint.getMinDepth())
                     continue;
                 //TODO see if this check is necessary
-                //if (isValidFile(gf, false, smbFiles))
-                fileList.add(gf);
+                if (isValidFile(gf, false, smbFiles))
+                    fileList.add(gf);
             }
         }
         return true;

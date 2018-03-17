@@ -19,10 +19,9 @@ public class SmbComponent extends GenericFileComponent<SmbFile> {
 
     @Override
     protected SmbEndpoint buildFileEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
-        uri = fixSpaces(uri);
+        uri = urlEncodeSpace(uri);
         SmbConfiguration config = new SmbConfiguration(new URI(uri));
-        SmbEndpoint endpoint = new SmbEndpoint(uri, this, config);
-        return endpoint;
+        return new SmbEndpoint(uri, this, config);
     }
 
     @Override
@@ -30,7 +29,7 @@ public class SmbComponent extends GenericFileComponent<SmbFile> {
         //empty on purpose
     }
 
-    private String fixSpaces(String input) {
+    private String urlEncodeSpace(String input) {
         return input.replace(" ", "%20");
     }
 }

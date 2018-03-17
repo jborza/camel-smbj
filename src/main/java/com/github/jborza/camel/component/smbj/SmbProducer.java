@@ -16,6 +16,10 @@ public class SmbProducer extends GenericFileProducer<SmbFile> {
         super(endpoint, operations);
     }
 
+    public void setEndpointPath(String endpointPath) {
+        this.endpointPath = endpointPath;
+    }
+
     @Override
     public void process(Exchange exchange) throws Exception {
         Exchange smbExchange = getEndpoint().createExchange(exchange);
@@ -24,11 +28,7 @@ public class SmbProducer extends GenericFileProducer<SmbFile> {
         ExchangeHelper.copyResults(exchange, smbExchange);
     }
 
-    public void setEndpointPath(String endpointPath) {
-        this.endpointPath = endpointPath;
-    }
-
-    protected void processExchange(Exchange exchange) throws Exception {
+    protected void processExchange(Exchange exchange) {
         String target = createFileName(exchange);
         writeFile(exchange, target);
         // let's store the name we really used in the header, so end-users
@@ -43,11 +43,11 @@ public class SmbProducer extends GenericFileProducer<SmbFile> {
         if (log.isDebugEnabled()) {
             log.debug("writeFile() fileName[" + fileName + "]");
         }
-        if(endpoint.isAutoCreate()){
-            //strip the share name, as it's a special part of the name for us
-            String share = getEndpoint().getConfiguration().getShare();
-            String fileNameWithoutShare = SmbPathUtils.removeShareName(fileName, share, false);
+        //strip the share name, as it's a special part of the name for us
+        String share = getEndpoint().getConfiguration().getShare();
+        String fileNameWithoutShare = SmbPathUtils.removeShareName(fileName, share, false);
 
+        if(endpoint.isAutoCreate()){
             java.io.File file = new java.io.File(fileNameWithoutShare);
             String parentDirectory = file.getParent();
             boolean absolute = FileUtil.isAbsolute(file);
@@ -59,7 +59,7 @@ public class SmbProducer extends GenericFileProducer<SmbFile> {
         if (log.isDebugEnabled()) {
             log.debug("About to write [" + fileName + "] to [" + getEndpoint() + "] from exchange [" + exchange + "]");
         }
-        boolean success = operations.storeFile(fileName, exchange);
+        boolean success = operations.storeFile(fileNameWithoutShare, exchange);
         if (!success) {
             throw new GenericFileOperationFailedException("Error writing file [" + fileName + "]");
         }
@@ -68,7 +68,7 @@ public class SmbProducer extends GenericFileProducer<SmbFile> {
         }
     }
 
-        @Override
+    @Override
     public SmbEndpoint getEndpoint() {
         return (SmbEndpoint) super.getEndpoint();
     }

@@ -1,12 +1,18 @@
 package com.github.jborza.camel.component.smbj;
 
+import com.github.jborza.camel.component.smbj.smbj.DfsPathResolveException;
+import com.github.jborza.camel.component.smbj.smbj.DfsResolutionResult;
 import com.hierynomus.msdtyp.AccessMask;
+import com.hierynomus.mserref.NtStatus;
 import com.hierynomus.msfscc.fileinformation.FileIdBothDirectoryInformation;
 import com.hierynomus.mssmb2.SMB2CreateDisposition;
 import com.hierynomus.mssmb2.SMB2ShareAccess;
+import com.hierynomus.mssmb2.messages.SMB2Echo;
 import com.hierynomus.smbj.SMBClient;
 import com.hierynomus.smbj.auth.AuthenticationContext;
+import com.hierynomus.smbj.common.SmbPath;
 import com.hierynomus.smbj.connection.Connection;
+import com.hierynomus.smbj.paths.PathResolveException;
 import com.hierynomus.smbj.session.Session;
 import com.hierynomus.smbj.share.DiskShare;
 import com.hierynomus.smbj.share.File;
@@ -14,8 +20,12 @@ import org.apache.camel.Exchange;
 import org.apache.camel.component.file.*;
 import org.apache.camel.util.IOHelper;
 import org.apache.camel.util.ObjectHelper;
+import org.apache.commons.io.IOUtils;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -27,11 +37,9 @@ import static com.github.jborza.camel.component.smbj.SmbConstants.PARENT_DIRECTO
 import static com.hierynomus.mssmb2.SMB2CreateDisposition.FILE_CREATE;
 
 public class SmbOperations implements GenericFileOperations<SmbFile> {
-    public static final int DEFAULT_COPY_BUFFER_SIZE = 4096;
     private final SMBClient client;
-    private Session session;
     private GenericFileEndpoint<SmbFile> endpoint;
-    private static final int MAX_BUFFER_SIZE = 262144;
+    private AuthenticationContext authenticationContext;
 
     public SmbOperations(SMBClient client) {
         this.client = client;
@@ -44,89 +52,49 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
 
     @Override
     public boolean deleteFile(String name) throws GenericFileOperationFailedException {
-        return false;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean existsFile(String name) throws GenericFileOperationFailedException {
-        //TODO test
-        login();
         SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
-        DiskShare share = (DiskShare) session.connectShare(config.getShare());
-        return share.fileExists(name);
+        String actualPath = SmbPathUtils.removeShareName(name, config.getShare(), true);
+        Session session = connectSession(config.getHost());
+        SmbPath targetPath = new SmbPath(config.getHost(), config.getShare(), actualPath);
+        DfsResolutionResult dfsResolutionResult = resolvePath(session, targetPath);
+        DiskShare share = dfsResolutionResult.getDiskShare();
+        actualPath = dfsResolutionResult.getSmbPath().getPath();
+        return share.fileExists(actualPath);
     }
 
     @Override
     public boolean renameFile(String s, String s1) throws GenericFileOperationFailedException {
-        return false;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean buildDirectory(String directory, boolean absolute) throws GenericFileOperationFailedException {
-        login();
-        SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
-
-        DiskShare share = (DiskShare) session.connectShare(config.getShare());
-
-        //strip share name from the beginning of directory
-        String shareName = config.getShare();
-        String directoryNormalized = directory.replaceFirst("^" + shareName, "");
-
-        Path path = Paths.get(directoryNormalized);
-        int len = path.getNameCount();
-        for (int i = 0; i < len; i++) {
-            Path partialPath = path.subpath(0, i + 1);
-            String pathAsString = SmbPathUtils.convertToBackslashes(partialPath.toString());
-            boolean exists = share.folderExists(pathAsString);
-            if (exists == false)
-                share.mkdir(pathAsString);
+        if(isDfs()) {
+            throw new UnsupportedOperationException();
         }
+        else{
+            SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
+            Session session = connectSession(config.getHost());
+            DiskShare share = (DiskShare) session.connectShare(config.getShare());
+            //strip share name from the beginning of directory
+            String shareName = config.getShare();
+            String directoryNormalized = directory.replaceFirst("^" + shareName, "");
 
-        return true;
-    }
-
-    public static int copy(InputStream input, OutputStream output) throws IOException {
-        return copy(input, output, DEFAULT_COPY_BUFFER_SIZE);
-    }
-
-    public static int copy(InputStream input, OutputStream output, int bufferSize) throws IOException {
-        return copy(input, output, bufferSize, false);
-    }
-
-    public static int copy(InputStream input, OutputStream output, int bufferSize, boolean flushOnEachWrite) throws IOException {
-        if (input instanceof ByteArrayInputStream) {
-            input.mark(0);
-            input.reset();
-            bufferSize = input.available();
-        } else {
-            int avail = input.available();
-            if (avail > bufferSize) {
-                bufferSize = avail;
+            Path path = Paths.get(directoryNormalized);
+            int len = path.getNameCount();
+            for (int i = 0; i < len; i++) {
+                Path partialPath = path.subpath(0, i + 1);
+                String pathAsString = SmbPathUtils.convertToBackslashes(partialPath.toString());
+                if (!share.folderExists(pathAsString))
+                    share.mkdir(pathAsString);
             }
+            return true;
         }
-
-        if (bufferSize > MAX_BUFFER_SIZE) {
-            bufferSize = MAX_BUFFER_SIZE;
-        }
-
-        byte[] buffer = new byte[bufferSize];
-        int n = input.read(buffer);
-
-        int total;
-        for (total = 0; -1 != n; n = input.read(buffer)) {
-            output.write(buffer, 0, n);
-            if (flushOnEachWrite) {
-                output.flush();
-            }
-
-            total += n;
-        }
-
-        if (!flushOnEachWrite) {
-            output.flush();
-        }
-
-        return total;
     }
 
     @Override
@@ -137,20 +105,21 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
             GenericFile<SmbFile> target = (GenericFile<SmbFile>) exchange.getProperty(FileComponent.FILE_EXCHANGE_FILE);
             ObjectHelper.notNull(target, "Exchange should have the " + FileComponent.FILE_EXCHANGE_FILE + " set");
             target.setBody(os);
-
-            login();
+            //SMB part
             SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
-
-            DiskShare share = (DiskShare) session.connectShare(config.getShare());
             String path = name;
             path = SmbPathUtils.convertToBackslashes(path);
-            //strip share name from path
-            path = SmbPathUtils.removeShareName(path, config.getShare(), true);
-
-            File f = share.openFile(path, EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
+            String actualPath = SmbPathUtils.removeShareName(path, config.getShare(), true);
+            Session session = connectSession(config.getHost());
+            SmbPath targetPath = new SmbPath(config.getHost(), config.getShare(), actualPath);
+            DfsResolutionResult dfsResolutionResult = resolvePath(session, targetPath);
+            DiskShare share = dfsResolutionResult.getDiskShare();
+            actualPath = dfsResolutionResult.getSmbPath().getPath();
+            //NB https://msdn.microsoft.com/en-us/library/cc246502.aspx - SMB2 CREATE Request
+            // ShareAccess.ALL means that other opens are allowed to read, but not write or delete the file
+            File f = share.openFile(actualPath, EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
             InputStream is = f.getInputStream();
-
-            copy(is, os, endpoint.getBufferSize());
+            IOUtils.copy(is, os, endpoint.getBufferSize());
             return true;
         } catch (IOException e) {
             throw new GenericFileOperationFailedException("Cannot retrieve file: " + name, e);
@@ -168,36 +137,37 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
 
     @Override
     public String getCurrentDirectory() throws GenericFileOperationFailedException {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void changeCurrentDirectory(String path) throws GenericFileOperationFailedException {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void changeToParentDirectory() throws GenericFileOperationFailedException {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public List<SmbFile> listFiles() throws GenericFileOperationFailedException {
-        return null;
+        //not implemented - use listFiles(String path)
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public List<SmbFile> listFiles(String path) throws GenericFileOperationFailedException {
-        String actualPath;
         List<SmbFile> files = new ArrayList<>();
+        SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
+        String actualPath = SmbPathUtils.removeShareName(path, config.getShare(), true);
         try {
-            login();
-            SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
-            DiskShare share = (DiskShare) session.connectShare(config.getShare());
-            actualPath = SmbPathUtils.convertToBackslashes(path);
-            //strip share name from path
-            actualPath = SmbPathUtils.removeShareName(actualPath, config.getShare(), true);
-            for (FileIdBothDirectoryInformation f : share.list(actualPath)) {
+            Session session = connectSession(config.getHost());
+            SmbPath targetPath = new SmbPath(config.getHost(), config.getShare(), actualPath);
+            DfsResolutionResult dfsResolutionResult = resolvePath(session, targetPath);
+            actualPath = dfsResolutionResult.getSmbPath().getPath();
+
+            for (FileIdBothDirectoryInformation f : dfsResolutionResult.getDiskShare().list(actualPath)) {
                 boolean isDirectory = isDirectory(f);
                 if (isDirectory) {
                     //skip special directories . and ..
@@ -225,54 +195,91 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
         return path.replace('\\', '/');
     }
 
-    public void login() {
-        SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
-
-        String domain = config.getDomain();
-        String username = config.getUsername();
-        String password = config.getPassword();
-
-        if (session != null) {
-            return;
-        }
-        try {
-            Connection connection = client.connect(config.getHost());
-            session = connection.authenticate(new AuthenticationContext(username, password.toCharArray(), domain));
-        } catch (IOException e) {
-            //TODO what now?
-        }
-    }
-
+    //see https://github.com/apache/camel/blob/master/components/camel-ftp/src/main/java/org/apache/camel/component/file/remote/SftpOperations.java - doStoreFile
     @Override
     public boolean storeFile(String name, Exchange exchange) {
         String storeName = getPath(name);
-
         InputStream inputStream = null;
         try {
             inputStream = exchange.getIn().getMandatoryBody(InputStream.class);
 
-            login();
+            String actualPath = name;
             SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
+            Session session = connectSession(config.getHost());
+            SmbPath targetPath = new SmbPath(config.getHost(), config.getShare(), actualPath);
+            DfsResolutionResult dfsResolutionResult = resolvePath(session, targetPath);
+            actualPath = dfsResolutionResult.getSmbPath().getPath();
+            File file = dfsResolutionResult.getDiskShare().openFile(actualPath, EnumSet.of(AccessMask.GENERIC_ALL), null, SMB2ShareAccess.ALL, FILE_CREATE, null);
 
-            DiskShare share = (DiskShare) session.connectShare(config.getShare());
-            GenericFile<SmbFile> inputFile = (GenericFile<SmbFile>) exchange.getIn().getBody();
-            Path path = Paths.get(config.getPath(), inputFile.getRelativeFilePath());
-            String pathAsString = SmbPathUtils.convertToBackslashes(path.toString());
-            File file = share.openFile(pathAsString, EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, FILE_CREATE, null);
+            OutputStream outputStream = file.getOutputStream();
 
-            OutputStream smbout = file.getOutputStream();
-            byte[] buf = new byte[512 * 1024]; //TODO this should be parametrizable
-            int numRead;
-            while ((numRead = inputStream.read(buf)) >= 0) {
-                smbout.write(buf, 0, numRead);
-            }
-            smbout.close();
-            //TODO set last modified date to inputFile.getLastModified()
+            IOUtils.copy(inputStream, outputStream, endpoint.getBufferSize());
+            outputStream.close();
             return true;
         } catch (Exception e) {
             throw new GenericFileOperationFailedException("Cannot store file " + storeName, e);
         } finally {
             IOHelper.close(inputStream, "store: " + storeName);
         }
+    }
+
+    private DfsResolutionResult resolvePath(Session session, SmbPath path) {
+        if (isDfs()) {
+            SmbPath resolvedPath = resolve(session, path);
+            DiskShare share = getDfsShare(session, resolvedPath);
+            return new DfsResolutionResult(share, resolvedPath);
+        } else {
+            DiskShare share = (DiskShare) session.connectShare(path.getShareName());
+            return new DfsResolutionResult(share, path);
+        }
+    }
+
+    private boolean isDfs() {
+        return ((SmbEndpoint) endpoint).isDfs();
+    }
+
+    private SmbPath resolve(Session session, SmbPath path) {
+        try {
+            SMB2Echo responsePacket = new SMB2Echo();
+            responsePacket.getHeader().setStatus(NtStatus.STATUS_PATH_NOT_COVERED);
+            return client.getPathResolver().resolve(session, responsePacket, path);
+        } catch (PathResolveException e) {
+            throw new DfsPathResolveException(e);
+        }
+    }
+
+    private DiskShare getDfsShare(Session session, SmbPath resolvedPath) {
+        if (isOnSameHost(session, resolvedPath))
+            return (DiskShare) session.connectShare(resolvedPath.getShareName());
+        else {
+            Session newSession = connectSession(resolvedPath.getHostname());
+            return (DiskShare) newSession.connectShare(resolvedPath.getShareName());
+        }
+    }
+
+    private boolean isOnSameHost(Session session, SmbPath path) {
+        return session.getConnection().getRemoteHostname().equals(path.getHostname());
+    }
+
+    private Session connectSession(String host) {
+        try {
+            Connection connection = client.connect(host);
+            return connection.authenticate(getAuthenticationContext());
+        } catch (IOException e) {
+            //TODO bad code
+            throw new RuntimeException(e);
+        }
+    }
+
+    private AuthenticationContext getAuthenticationContext() {
+        if (authenticationContext == null) {
+            SmbConfiguration config = ((SmbConfiguration) endpoint.getConfiguration());
+
+            String domain = config.getDomain();
+            String username = config.getUsername();
+            String password = config.getPassword();
+            authenticationContext = new AuthenticationContext(username, password.toCharArray(), domain);
+        }
+        return authenticationContext;
     }
 }

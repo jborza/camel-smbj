@@ -3,7 +3,8 @@ package com.github.jborza.camel.component.smbj;
 import java.io.File;
 import java.util.regex.Pattern;
 
-public class SmbPathUtils {
+public final class SmbPathUtils {
+
     public static String convertToBackslashes(String path) {
         return path.replace('/', '\\');
     }
