@@ -30,13 +30,18 @@
     <name>Camel SMBJ Component</name>
     <url>http://www.github.com/jborza/camel-smbj</url>
 
+    <properties>
+        <cobertura.version>2.7</cobertura.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-core</artifactId>
             <version>2.20.0</version>
         </dependency>
-        <!-- for testing -->
+
+        <!-- camel for testing -->
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-test</artifactId>
@@ -55,6 +60,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.25</version>
+        </dependency>
+        <!-- commons.io -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.5</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -81,11 +92,6 @@
             <artifactId>cglib</artifactId>
             <version>3.2.6</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.5</version>
         </dependency>
     </dependencies>
 
@@ -132,7 +138,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.7</version>
+                <version>${cobertura.version}</version>
                 <configuration>
                     <formats>
                         <format>html</format>
@@ -149,7 +155,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.7</version>
+                <version>${cobertura.version}</version>
                 <configuration>
                     <check></check>
                     <formats>

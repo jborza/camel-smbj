@@ -1,4 +1,4 @@
-package com.github.jborza.camel.component.smbj.smbj;
+package com.github.jborza.camel.component.smbj.dfs;
 
 import com.hierynomus.smbj.common.SmbPath;
 import com.hierynomus.smbj.share.DiskShare;
