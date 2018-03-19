@@ -47,7 +47,13 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
 
     @Override
     public boolean deleteFile(String name) throws GenericFileOperationFailedException {
-        throw new UnsupportedOperationException();
+        try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
+            share.connect(name);
+            share.getShare().rm(share.getPath());
+            return true;
+        } catch (IOException e) {
+            throw new GenericFileOperationFailedException("Cannot delete file: " + name, e);
+        }
     }
 
     @Override
