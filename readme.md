@@ -4,6 +4,7 @@ Camel SMBJ Component
 [![Build Status](https://travis-ci.org/jborza/camel-smbj.svg?branch=master)](https://travis-ci.org/jborza/camel-smbj) 
 [![codecov](https://codecov.io/gh/jborza/camel-smbj/branch/master/graph/badge.svg)](https://codecov.io/gh/jborza/camel-smbj)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ea681a23c98d4b1db9d8322393eabb17)](https://www.codacy.com/app/jborza/camel-smbj?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jborza/camel-smbj&amp;utm_campaign=Badge_Grade)
+[![Known Vulnerabilities](https://snyk.io/test/github/jborza/camel-smbj/badge.svg?targetFile=pom.xml)](https://snyk.io/test/github/jborza/camel-smbj?targetFile=pom.xml)
 
 This component is intended to be a drop-in replacement for [camel-jcifs component](http://camel.apache.org/jcifs.html).
 It provides access to remote file systems over the SMB networking protocol with support of SMB2.
