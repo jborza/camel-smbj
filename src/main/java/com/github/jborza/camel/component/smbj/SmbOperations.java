@@ -41,9 +41,8 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
 
     @Override
     public boolean deleteFile(String name) throws GenericFileOperationFailedException {
-        try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
-            share.connect(name);
-            share.getShare().rm(share.getPath());
+        try {
+            doDeleteFile(name);
             return true;
         } catch (IOException e) {
             throw new GenericFileOperationFailedException("Cannot delete file: " + name, e);
@@ -52,17 +51,18 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
 
     @Override
     public boolean existsFile(String name) throws GenericFileOperationFailedException {
-        try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
-            share.connect(name);
-            return share.getShare().fileExists(share.getPath());
-        } catch (IOException e) {
-            throw new GenericFileOperationFailedException("Cannot determine if file: " + name + " exists", e);
-        }
+        return doFileExists(name);
     }
 
     @Override
     public boolean renameFile(String from, String to) throws GenericFileOperationFailedException {
-        throw new UnsupportedOperationException();
+        try {
+            doRenameFile(from, to);
+            return true;
+        }
+        catch(IOException e){
+            throw new GenericFileOperationFailedException("Cannot rename file: " + from + " to:" + to, e);
+        }
     }
 
     @Override
@@ -77,18 +77,11 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
         GenericFile<SmbFile> target = (GenericFile<SmbFile>) exchange.getProperty(FileComponent.FILE_EXCHANGE_FILE);
         ObjectHelper.notNull(target, "Exchange should have the " + FileComponent.FILE_EXCHANGE_FILE + " set");
         target.setBody(os);
-        try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
-            share.connect(name);
-            //NB https://msdn.microsoft.com/en-us/library/cc246502.aspx - SMB2 CREATE Request
-            // ShareAccess.ALL means that other opens are allowed to read, but not write or delete the file
-            File f = share.getShare().openFile(share.getPath(), EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
-            InputStream is = f.getInputStream();
-            IOUtils.copy(is, os, endpoint.getBufferSize());
+        try {
+            doRetrieveFile(name, os);
             return true;
         } catch (IOException e) {
             throw new GenericFileOperationFailedException("Cannot retrieve file: " + name, e);
-        } finally {
-            IOHelper.close(os, "retrieve: " + name);
         }
     }
 
@@ -120,22 +113,11 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
 
     @Override
     public List<SmbFile> listFiles(String path) throws GenericFileOperationFailedException {
-        List<SmbFile> files = new ArrayList<>();
-        try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
-            share.connect(path);
-            for (FileIdBothDirectoryInformation f : share.getShare().list(share.getPath())) {
-                boolean isDirectory = isDirectory(f);
-                if (isDirectory) {
-                    //skip special directories . and ..
-                    if (f.getFileName().equals(CURRENT_DIRECTORY) || f.getFileName().equals(PARENT_DIRECTORY))
-                        continue;
-                }
-                files.add(new SmbFile(isDirectory, f.getFileName(), f.getEndOfFile(), getLastModified(f)));
-            }
-        } catch (Exception e) {
+        try{
+            return doListFiles(path);
+        } catch (IOException e) {
             throw new GenericFileOperationFailedException("Could not get files " + e.getMessage(), e);
         }
-        return files;
     }
 
     private static boolean isDirectory(FileIdBothDirectoryInformation info) {
@@ -158,22 +140,14 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
 
         try {
             inputStream = exchange.getIn().getMandatoryBody(InputStream.class);
-
-            try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
-                share.connect(name);
-                File file = share.getShare().openFile(share.getPath(), EnumSet.of(AccessMask.GENERIC_ALL), null, SMB2ShareAccess.ALL, FILE_CREATE, null);
-                OutputStream outputStream = file.getOutputStream();
-
-                IOUtils.copy(inputStream, outputStream, endpoint.getBufferSize());
-                outputStream.close();
-                return true;
-            }
+            return doStoreFile(name, inputStream);
         } catch (Exception e) {
             throw new GenericFileOperationFailedException("Cannot store file " + storeName, e);
         } finally {
             IOHelper.close(inputStream, "store: " + storeName);
         }
     }
+
 
     private boolean isDfs() {
         return ((SmbEndpoint) endpoint).isDfs();
@@ -183,4 +157,69 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
         return ((SmbConfiguration) endpoint.getConfiguration());
     }
 
+    private  List<SmbFile> doListFiles(String path) throws IOException {
+        List<SmbFile> files = new ArrayList<>();
+        try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
+            share.connect(path);
+            for (FileIdBothDirectoryInformation f : share.getShare().list(share.getPath())) {
+                boolean isDirectory = isDirectory(f);
+                if (isDirectory) {
+                    //skip special directories . and ..
+                    if (f.getFileName().equals(CURRENT_DIRECTORY) || f.getFileName().equals(PARENT_DIRECTORY))
+                        continue;
+                }
+                files.add(new SmbFile(isDirectory, f.getFileName(), f.getEndOfFile(), getLastModified(f)));
+            }
+            return files;
+        }
+    }
+
+    private boolean doStoreFile(String name, InputStream inputStream) throws IOException {
+        try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
+            share.connect(name);
+            File file = share.getShare().openFile(share.getPath(), EnumSet.of(AccessMask.GENERIC_ALL), null, SMB2ShareAccess.ALL, FILE_CREATE, null);
+            OutputStream outputStream = file.getOutputStream();
+
+            IOUtils.copy(inputStream, outputStream, endpoint.getBufferSize());
+            outputStream.close();
+            return true;
+        }
+    }
+
+    private void doRetrieveFile(String name, OutputStream os) throws IOException {
+        try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
+            share.connect(name);
+            //NB https://msdn.microsoft.com/en-us/library/cc246502.aspx - SMB2 CREATE Request
+            // ShareAccess.ALL means that other opens are allowed to read, but not write or delete the file
+            File f = share.getShare().openFile(share.getPath(), EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
+            InputStream is = f.getInputStream();
+            IOUtils.copy(is, os, endpoint.getBufferSize());
+        }
+        finally {
+            IOHelper.close(os, "retrieve: " + name);
+        }
+    }
+
+    private boolean doFileExists(String name) {
+        try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
+            share.connect(name);
+            return share.getShare().fileExists(share.getPath());
+        } catch (IOException e) {
+            throw new GenericFileOperationFailedException("Cannot determine if file: " + name + " exists", e);
+        }
+    }
+
+    private void doDeleteFile(String name) throws IOException{
+        try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
+            share.connect(name);
+            share.getShare().rm(share.getPath());
+        }
+    }
+
+    private void doRenameFile(String from, String to) throws IOException {
+        try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
+            share.connect(from);
+            share.rename(from, to);
+        }
+    }
 }
