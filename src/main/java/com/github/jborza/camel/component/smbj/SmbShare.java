@@ -24,7 +24,6 @@ public class SmbShare implements AutoCloseable {
 
     private Session session;
     private String path;
-    private DfsResolutionResult resolutionResult;
     private DiskShare share;
 
     public SmbShare(SMBClient client, SmbConfiguration config, boolean dfs) {
@@ -35,9 +34,9 @@ public class SmbShare implements AutoCloseable {
 
     public void connect(String targetPath) {
         session = connectSession(config.getHost());
-        resolutionResult = resolvePlainPath(targetPath);
-        path = resolutionResult.getSmbPath().getPath();
-        share = resolutionResult.getDiskShare();
+        DfsResolutionResult pathResolutionResult = resolvePlainPath(targetPath);
+        path = pathResolutionResult.getSmbPath().getPath();
+        share = pathResolutionResult.getDiskShare();
     }
 
     private DfsResolutionResult resolvePlainPath(String targetPath) {
@@ -71,8 +70,7 @@ public class SmbShare implements AutoCloseable {
             Connection connection = client.connect(host);
             return connection.authenticate(getAuthenticationContext());
         } catch (IOException e) {
-            //TODO bad code
-            throw new RuntimeException(e);
+            throw new SmbConnectionException(e);
         }
     }
 
@@ -124,7 +122,7 @@ public class SmbShare implements AutoCloseable {
         session = connectSession(config.getHost());
         DfsResolutionResult resolvedFrom = resolvePlainPath(from);
         DfsResolutionResult resolvedTo = resolvePlainPath(to);
-        if (resolvedFrom.getSmbPath().isOnSameShare(resolvedTo.getSmbPath()) == false) {
+        if (!resolvedFrom.getSmbPath().isOnSameShare(resolvedTo.getSmbPath())) {
             //TODO introduce a specialized exception type
             throw new GenericFileOperationFailedException("Rename operaton failed, " + from + " and " + to + " are on different shares!");
         }

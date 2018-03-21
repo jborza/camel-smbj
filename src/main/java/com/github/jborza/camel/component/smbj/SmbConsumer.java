@@ -23,11 +23,11 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
 
     @Override
     protected boolean pollDirectory(String fileName, List<GenericFile<SmbFile>> fileList, int depth) {
+        int currentDepth = depth++;
         if (log.isTraceEnabled()) {
             log.trace("pollDirectory() running. My delay is [" + this.getDelay() + "] and my strategy is [" + this.getPollStrategy().getClass().toString() + "]");
             log.trace("pollDirectory() fileName[" + fileName + "]");
         }
-        depth++;
 
         List<SmbFile> smbFiles = operations.listFiles(fileName);
         for (SmbFile smbFile : smbFiles) {
@@ -37,14 +37,14 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
             }
             GenericFile<SmbFile> gf = asGenericFile(fileName, smbFile);
             if (gf.isDirectory()) {
-                if (endpoint.isRecursive() && depth < endpoint.getMaxDepth()) {
+                if (endpoint.isRecursive() && currentDepth < endpoint.getMaxDepth()) {
                     //recursive scan of the subdirectory
                     String subDirName = fileName + "/" + gf.getFileName();
-                    pollDirectory(subDirName, fileList, depth);
+                    pollDirectory(subDirName, fileList, currentDepth);
                 }
             } else {
                 //conform to the minDepth parameter
-                if (depth < endpoint.getMinDepth())
+                if (currentDepth < endpoint.getMinDepth())
                     continue;
                 //TODO see if this check is necessary
                 if (isValidFile(gf, false, smbFiles))

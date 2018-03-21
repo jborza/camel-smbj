@@ -28,7 +28,6 @@ import static com.hierynomus.mssmb2.SMB2CreateDisposition.FILE_CREATE;
 public class SmbOperations implements GenericFileOperations<SmbFile> {
     private final SMBClient client;
     private GenericFileEndpoint<SmbFile> endpoint;
-    private AuthenticationContext authenticationContext;
 
     public SmbOperations(SMBClient client) {
         this.client = client;
@@ -87,7 +86,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
 
     @Override
     public void releaseRetreivedFileResources(Exchange exchange) throws GenericFileOperationFailedException {
-
+        //intentionally left blank
     }
 
     @Override

@@ -19,8 +19,8 @@ public class SmbComponent extends GenericFileComponent<SmbFile> {
 
     @Override
     protected SmbEndpoint buildFileEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
-        uri = urlEncodeSpace(uri);
-        SmbConfiguration config = new SmbConfiguration(new URI(uri));
+        String encodedUri = urlEncodeSpace(uri);
+        SmbConfiguration config = new SmbConfiguration(new URI(encodedUri));
         return new SmbEndpoint(uri, this, config);
     }
 
