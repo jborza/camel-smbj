@@ -5,7 +5,6 @@ import com.hierynomus.msfscc.fileinformation.FileIdBothDirectoryInformation;
 import com.hierynomus.mssmb2.SMB2CreateDisposition;
 import com.hierynomus.mssmb2.SMB2ShareAccess;
 import com.hierynomus.smbj.SMBClient;
-import com.hierynomus.smbj.auth.AuthenticationContext;
 import com.hierynomus.smbj.share.File;
 import org.apache.camel.Exchange;
 import org.apache.camel.component.file.*;
@@ -157,20 +156,24 @@ public class SmbOperations implements GenericFileOperations<SmbFile> {
     }
 
     private  List<SmbFile> doListFiles(String path) throws IOException {
-        List<SmbFile> files = new ArrayList<>();
         try (SmbShare share = new SmbShare(client, getConfiguration(), isDfs())) {
             share.connect(path);
-            for (FileIdBothDirectoryInformation f : share.getShare().list(share.getPath())) {
-                boolean isDirectory = isDirectory(f);
-                if (isDirectory) {
-                    //skip special directories . and ..
-                    if (f.getFileName().equals(CURRENT_DIRECTORY) || f.getFileName().equals(PARENT_DIRECTORY))
-                        continue;
-                }
-                files.add(new SmbFile(isDirectory, f.getFileName(), f.getEndOfFile(), getLastModified(f)));
-            }
-            return files;
+            return listFiles(share);
         }
+    }
+
+    private List<SmbFile> listFiles(SmbShare share) {
+        List<SmbFile> files = new ArrayList<>();
+        for (FileIdBothDirectoryInformation f : share.getShare().list(share.getPath())) {
+            boolean isDirectory = isDirectory(f);
+            if (isDirectory) {
+                //skip special directories . and ..
+                if (f.getFileName().equals(CURRENT_DIRECTORY) || f.getFileName().equals(PARENT_DIRECTORY))
+                    continue;
+            }
+            files.add(new SmbFile(isDirectory, f.getFileName(), f.getEndOfFile(), getLastModified(f)));
+        }
+        return files;
     }
 
     private boolean doStoreFile(String name, InputStream inputStream) throws IOException {

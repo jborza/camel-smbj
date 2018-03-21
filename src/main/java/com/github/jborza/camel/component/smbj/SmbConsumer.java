@@ -23,7 +23,7 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
 
     @Override
     protected boolean pollDirectory(String fileName, List<GenericFile<SmbFile>> fileList, int depth) {
-        int currentDepth = depth++;
+        int currentDepth = depth + 1;
         if (log.isTraceEnabled()) {
             log.trace("pollDirectory() running. My delay is [" + this.getDelay() + "] and my strategy is [" + this.getPollStrategy().getClass().toString() + "]");
             log.trace("pollDirectory() fileName[" + fileName + "]");
