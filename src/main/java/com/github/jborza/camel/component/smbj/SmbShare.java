@@ -3,7 +3,9 @@ package com.github.jborza.camel.component.smbj;
 import com.github.jborza.camel.component.smbj.dfs.DfsResolutionResult;
 import com.github.jborza.camel.component.smbj.dfs.DfsResolver;
 import com.hierynomus.msdtyp.AccessMask;
+import com.hierynomus.msfscc.fileinformation.FileIdBothDirectoryInformation;
 import com.hierynomus.mssmb2.SMB2CreateDisposition;
+import com.hierynomus.mssmb2.SMB2CreateOptions;
 import com.hierynomus.mssmb2.SMB2ShareAccess;
 import com.hierynomus.smbj.SMBClient;
 import com.hierynomus.smbj.auth.AuthenticationContext;
@@ -13,23 +15,33 @@ import com.hierynomus.smbj.session.Session;
 import com.hierynomus.smbj.share.DiskShare;
 import com.hierynomus.smbj.share.File;
 import org.apache.camel.component.file.GenericFileOperationFailedException;
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
+
+import static com.github.jborza.camel.component.smbj.SmbConstants.CURRENT_DIRECTORY;
+import static com.github.jborza.camel.component.smbj.SmbConstants.PARENT_DIRECTORY;
 
 public class SmbShare implements AutoCloseable {
     private final SMBClient client;
     private final SmbConfiguration config;
     private final boolean dfs;
+    private final int bufferSize;
 
     private Session session;
     private String path;
     private DiskShare share;
 
-    public SmbShare(SMBClient client, SmbConfiguration config, boolean dfs) {
+    public SmbShare(SMBClient client, SmbConfiguration config, boolean dfs, int bufferSize) {
         this.client = client;
         this.config = config;
         this.dfs = dfs;
+        this.bufferSize = bufferSize;
     }
 
     public void connect(String targetPath) {
@@ -124,11 +136,48 @@ public class SmbShare implements AutoCloseable {
         DfsResolutionResult resolvedTo = resolvePlainPath(to);
         if (!resolvedFrom.getSmbPath().isOnSameShare(resolvedTo.getSmbPath())) {
             //TODO introduce a specialized exception type
-            throw new GenericFileOperationFailedException("Rename operaton failed, " + from + " and " + to + " are on different shares!");
+            throw new GenericFileOperationFailedException("Rename operation failed, " + from + " and " + to + " are on different shares!");
         }
         DiskShare share = resolvedFrom.getDiskShare();
         EnumSet<AccessMask> renameAttributes = EnumSet.of(AccessMask.FILE_READ_ATTRIBUTES, AccessMask.DELETE, AccessMask.SYNCHRONIZE);
         File file = share.openFile(resolvedFrom.getSmbPath().getPath(), renameAttributes, null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
         file.rename(resolvedTo.getSmbPath().getPath());
+    }
+
+    public void storeFile(InputStream inputStream) throws IOException {
+        File file = openForWrite(getShare(), getPath());
+        try (OutputStream outputStream = file.getOutputStream()) {
+            IOUtils.copy(inputStream, outputStream, bufferSize);
+        }
+    }
+
+    public List<SmbFile> listFiles() {
+        List<SmbFile> files = new ArrayList<>();
+        for (FileIdBothDirectoryInformation f : getShare().list(getPath())) {
+            boolean isDirectory = FileDirectoryAttributes.isDirectory(f);
+            if (isDirectory) {
+                //skip special directories . and ..
+                if (f.getFileName().equals(CURRENT_DIRECTORY) || f.getFileName().equals(PARENT_DIRECTORY))
+                    continue;
+            }
+            files.add(new SmbFile(isDirectory, f.getFileName(), f.getEndOfFile(), FileDirectoryAttributes.getLastModified(f)));
+        }
+        return files;
+    }
+
+    public void retrieveFile(OutputStream os) throws IOException {
+        //NB https://msdn.microsoft.com/en-us/library/cc246502.aspx - SMB2 CREATE Request
+        // ShareAccess.ALL means that other opens are allowed to read, but not write or delete the file
+        File f = openForRead(getShare(), getPath());
+        InputStream is = f.getInputStream();
+        IOUtils.copy(is, os, bufferSize);
+    }
+
+    private File openForWrite(DiskShare share, String name) {
+        return share.openFile(name, EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_CREATE, EnumSet.of(SMB2CreateOptions.FILE_SEQUENTIAL_ONLY));
+    }
+
+    private File openForRead(DiskShare share, String name) {
+        return share.openFile(name, EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
     }
 }
