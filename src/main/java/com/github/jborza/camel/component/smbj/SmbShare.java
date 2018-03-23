@@ -44,7 +44,7 @@ public class SmbShare implements AutoCloseable {
         this.bufferSize = bufferSize;
     }
 
-    public void connect(String targetPath) {
+    private void connect(String targetPath) {
         session = connectSession(config.getHost());
         DfsResolutionResult pathResolutionResult = resolvePlainPath(targetPath);
         path = pathResolutionResult.getSmbPath().getPath();
@@ -144,14 +144,16 @@ public class SmbShare implements AutoCloseable {
         file.rename(resolvedTo.getSmbPath().getPath());
     }
 
-    public void storeFile(InputStream inputStream) throws IOException {
+    public void storeFile(String path, InputStream inputStream) throws IOException {
+        connect(path);
         File file = openForWrite(getShare(), getPath());
         try (OutputStream outputStream = file.getOutputStream()) {
             IOUtils.copy(inputStream, outputStream, bufferSize);
         }
     }
 
-    public List<SmbFile> listFiles() {
+    public List<SmbFile> listFiles(String path) {
+        connect(path);
         List<SmbFile> files = new ArrayList<>();
         for (FileIdBothDirectoryInformation f : getShare().list(getPath())) {
             boolean isDirectory = FileDirectoryAttributes.isDirectory(f);
@@ -165,12 +167,23 @@ public class SmbShare implements AutoCloseable {
         return files;
     }
 
-    public void retrieveFile(OutputStream os) throws IOException {
+    public void retrieveFile(String path, OutputStream os) throws IOException {
+        connect(path);
         //NB https://msdn.microsoft.com/en-us/library/cc246502.aspx - SMB2 CREATE Request
         // ShareAccess.ALL means that other opens are allowed to read, but not write or delete the file
         File f = openForRead(getShare(), getPath());
         InputStream is = f.getInputStream();
         IOUtils.copy(is, os, bufferSize);
+    }
+
+    public boolean fileExists(String path) throws IOException{
+        connect(path);
+        return getShare().fileExists(getPath());
+    }
+
+    public void deleteFile(String path) throws IOException{
+        connect(path);
+        getShare().rm(getPath());
     }
 
     private File openForWrite(DiskShare share, String name) {

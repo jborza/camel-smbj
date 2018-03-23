@@ -35,7 +35,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
     @Override
     public boolean deleteFile(String name) throws GenericFileOperationFailedException {
         try {
-            smbClient.doDeleteFile(name);
+            smbClient.deleteFile(name);
             return true;
         } catch (IOException e) {
             throw new GenericFileOperationFailedException("Cannot delete file: " + name, e);
@@ -50,7 +50,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
     @Override
     public boolean existsFile(String name) throws GenericFileOperationFailedException {
         try {
-            return smbClient.doFileExists(name);
+            return smbClient.fileExists(name);
         } catch (IOException e) {
             throw new GenericFileOperationFailedException("Cannot determine if file: " + name + " exists", e);
         }
@@ -59,7 +59,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
     @Override
     public boolean renameFile(String from, String to) throws GenericFileOperationFailedException {
         try {
-            smbClient.doRenameFile(from, to);
+            smbClient.renameFile(from, to);
             return true;
         } catch (IOException e) {
             throw new GenericFileOperationFailedException("Cannot rename file: " + from + " to:" + to, e);
@@ -73,7 +73,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
         ObjectHelper.notNull(target, "Exchange should have the " + FileComponent.FILE_EXCHANGE_FILE + " set");
         target.setBody(os);
         try {
-            smbClient.doRetrieveFile(name, os);
+            smbClient.retrieveFile(name, os);
             return true;
         } catch (IOException e) {
             throw new GenericFileOperationFailedException("Cannot retrieve file: " + name, e);
@@ -109,7 +109,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
     @Override
     public List<SmbFile> listFiles(String path) throws GenericFileOperationFailedException {
         try {
-            return smbClient.doListFiles(path);
+            return smbClient.listFiles(path);
         } catch (IOException e) {
             throw new GenericFileOperationFailedException("Could not get files " + e.getMessage(), e);
         }
@@ -125,7 +125,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
         InputStream inputStream = null;
         try {
             inputStream = exchange.getIn().getMandatoryBody(InputStream.class);
-            smbClient.doStoreFile(name, inputStream);
+            smbClient.storeFile(name, inputStream);
             return true;
         } catch (Exception e) {
             String storeName = getPath(name);

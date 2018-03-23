@@ -1,6 +1,5 @@
 package com.github.jborza.camel.component.smbj;
 
-import org.apache.camel.component.file.GenericFileOperationFailedException;
 import org.apache.camel.util.IOHelper;
 
 import java.io.IOException;
@@ -19,46 +18,40 @@ public class SmbClient {
         return smbShareFactory.makeSmbShare();
     }
 
-    public List<SmbFile> doListFiles(String path) throws IOException {
+    public List<SmbFile> listFiles(String path) throws IOException {
         try (SmbShare share = makeSmbShare()) {
-            share.connect(path);
-            return share.listFiles();
+            return share.listFiles(path);
         }
     }
 
-    public void doStoreFile(String name, InputStream inputStream) throws IOException {
+    public void storeFile(String name, InputStream inputStream) throws IOException {
         try (SmbShare share = makeSmbShare()) {
-            share.connect(name);
-            share.storeFile(inputStream);
+            share.storeFile(name, inputStream);
         }
     }
 
-    public void doRetrieveFile(String name, OutputStream os) throws IOException {
+    public void retrieveFile(String name, OutputStream os) throws IOException {
         try (SmbShare share = makeSmbShare()) {
-            share.connect(name);
-            share.retrieveFile(os);
+            share.retrieveFile(name, os);
         } finally {
             IOHelper.close(os, "retrieve: " + name);
         }
     }
 
-    public boolean doFileExists(String name) throws IOException {
+    public boolean fileExists(String name) throws IOException {
         try (SmbShare share = makeSmbShare()) {
-            share.connect(name);
-            return share.getShare().fileExists(share.getPath());
+            return share.fileExists(name);
         }
     }
 
-    public void doDeleteFile(String name) throws IOException {
+    public void deleteFile(String name) throws IOException {
         try (SmbShare share = makeSmbShare()) {
-            share.connect(name);
-            share.getShare().rm(share.getPath());
+            share.deleteFile(name);
         }
     }
 
-    public void doRenameFile(String from, String to) throws IOException {
+    public void renameFile(String from, String to) throws IOException {
         try (SmbShare share = makeSmbShare()) {
-            share.connect(from);
             share.rename(from, to);
         }
     }
