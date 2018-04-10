@@ -15,6 +15,7 @@ import com.hierynomus.smbj.session.Session;
 import com.hierynomus.smbj.share.DiskShare;
 import com.hierynomus.smbj.share.File;
 import org.apache.camel.component.file.GenericFileOperationFailedException;
+import org.apache.camel.util.IOHelper;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -169,11 +170,9 @@ public class SmbShare implements AutoCloseable {
 
     public void retrieveFile(String path, OutputStream os) throws IOException {
         connect(path);
-        //NB https://msdn.microsoft.com/en-us/library/cc246502.aspx - SMB2 CREATE Request
-        // ShareAccess.ALL means that other opens are allowed to read, but not write or delete the file
         File f = openForRead(getShare(), getPath());
         InputStream is = f.getInputStream();
-        IOUtils.copy(is, os, bufferSize);
+        IOHelper.copyAndCloseInput(is,os,bufferSize);
     }
 
     public boolean fileExists(String path) throws IOException{
@@ -186,11 +185,13 @@ public class SmbShare implements AutoCloseable {
         getShare().rm(getPath());
     }
 
-    private File openForWrite(DiskShare share, String name) {
+    private static File openForWrite(DiskShare share, String name) {
         return share.openFile(name, EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_CREATE, EnumSet.of(SMB2CreateOptions.FILE_SEQUENTIAL_ONLY));
     }
 
-    private File openForRead(DiskShare share, String name) {
+    private static File openForRead(DiskShare share, String name) {
+        //NB https://msdn.microsoft.com/en-us/library/cc246502.aspx - SMB2 CREATE Request
+        // ShareAccess.ALL means that other opens are allowed to read, but not write or delete the file
         return share.openFile(name, EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
     }
 }

@@ -36,7 +36,8 @@ public class SmbProducer extends GenericFileProducer<SmbFile> {
         exchange.getIn().setHeader(Exchange.FILE_NAME_PRODUCED, target);
     }
 
-    //TODO override createFileName to be compliant with options: flatten, etc
+    //TODO maybe override createFileName to be compliant with options: flatten, etc
+    //camel-jcifs looks at both Windows and Unix separators
 
     @Override
     public void writeFile(Exchange exchange, String fileName) throws GenericFileOperationFailedException {
