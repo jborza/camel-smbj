@@ -47,10 +47,11 @@ class SmbConfigurationSpec extends Specification {
         expect:
         def cfg = new SmbConfiguration(new URI(uri))
         cfg.getPath() == path
+        cfg.getShare() == share
 
         where:
         uri                             | share   | path
-        "smb2://host/"                  | ""      | "/"
+        "smb2://host/"                  | ""    | "/"
         "smb2://host/share/"            | "share" | "/"
         "smb2://host/share/dir/subdir/" | "share" | "dir/subdir/"
     }
