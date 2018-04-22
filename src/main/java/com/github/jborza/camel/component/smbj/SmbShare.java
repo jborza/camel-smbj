@@ -37,6 +37,8 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -82,10 +84,16 @@ public class SmbShare implements AutoCloseable {
             session.close();
     }
 
+    /**
+     * Gets the connected share (either resolved by DFS or directly connected)
+     */
     public DiskShare getShare() {
         return share;
     }
 
+    /**
+     * Gets the DFS resolved path, if DFS is used. Otherwise the supplied path is returned
+     */
     public String getPath() {
         return path;
     }
@@ -201,6 +209,19 @@ public class SmbShare implements AutoCloseable {
         getShare().rm(getPath());
     }
 
+    public boolean mkdirs(String directory) {
+        connect(directory);
+        Path path = Paths.get(getPath());
+        mkdirs(path);
+        return true;
+    }
+
+    private void mkdirs(Path path){
+        if(!getShare().folderExists(path.getParent().toString()))
+            mkdirs(path.getParent());
+        getShare().mkdir(path.toString());
+    }
+
     private static File openForWrite(DiskShare share, String name) {
         return share.openFile(name, EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_CREATE, EnumSet.of(SMB2CreateOptions.FILE_SEQUENTIAL_ONLY));
     }
@@ -210,4 +231,5 @@ public class SmbShare implements AutoCloseable {
         // ShareAccess.ALL means that other opens are allowed to read, but not write or delete the file
         return share.openFile(name, EnumSet.of(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
     }
+
 }

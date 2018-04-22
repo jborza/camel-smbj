@@ -106,6 +106,13 @@ class SmbOperationsSpec extends Specification {
         share != null
     }
 
+    def "buildDirectory test"(){
+        when:
+        ops.buildDirectory('share/level1/level2',true)
+        then:
+        1 * mockSmbClient.mkdirs('share/level1/level2')
+    }
+
     def "listFiles() throws UnsupportedOperationException"(){
         when:
         ops.listFiles()
@@ -163,6 +170,14 @@ class SmbOperationsSpec extends Specification {
         when:
         mockSmbClient.listFiles(_) >> { throw new IOException() }
         ops.listFiles("dir")
+        then:
+        thrown GenericFileOperationFailedException
+    }
+
+    def "buildDirectory with exception is rethrown"(){
+        when:
+        mockSmbClient.mkdirs(_) >> { throw new IOException() }
+        ops.buildDirectory("dir")
         then:
         thrown GenericFileOperationFailedException
     }

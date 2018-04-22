@@ -71,4 +71,10 @@ public class SmbClient {
             share.rename(from, to);
         }
     }
+
+    public boolean mkdirs(String directory) throws IOException {
+        try (SmbShare share = makeSmbShare()) {
+            return share.mkdirs(directory);
+        }
+    }
 }

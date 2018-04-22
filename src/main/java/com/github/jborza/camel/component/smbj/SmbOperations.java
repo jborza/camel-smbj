@@ -56,9 +56,15 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
         }
     }
 
+
     @Override
     public boolean buildDirectory(String directory, boolean absolute) throws GenericFileOperationFailedException {
-        throw new UnsupportedOperationException();
+        try{
+            return smbClient.mkdirs(directory);
+        }
+        catch(IOException e){
+            throw new GenericFileOperationFailedException("Could not build directory: "+directory,e);
+        }
     }
 
     @Override
