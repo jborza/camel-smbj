@@ -72,7 +72,7 @@ class SmbConfigurationSpec extends Specification {
         "smb2://host/share/dir/subdir/" | "share" | "dir/subdir/"
     }
 
-    def getSmbHostPathTest() {
+    def "should process smb host path"() {
         expect:
         def cfg = new SmbConfiguration(new URI(uri))
         cfg.getSmbHostPath() == hostPath

@@ -85,9 +85,9 @@ class SmbOperationsSpec extends Specification {
         def ctx = new DefaultCamelContext()
         def exchange = new DefaultExchange(ctx)
         def gf = new GenericFile<SmbFile>()
-        exchange.setProperty(FileComponent.FILE_EXCHANGE_FILE,gf)
+        exchange.setProperty(FileComponent.FILE_EXCHANGE_FILE, gf)
         when:
-        ops.retrieveFile("path/to/file",exchange)
+        ops.retrieveFile("path/to/file", exchange)
         then:
         1 * mockSmbClient.retrieveFile("path/to/file", !null)
     }
@@ -99,49 +99,49 @@ class SmbOperationsSpec extends Specification {
         1 * mockSmbClient.renameFile("directory/source_file.ext", "directory/target_file.ext")
     }
 
-    def "make share test"(){
+    def "make share test"() {
         when:
         def share = ops.makeSmbShare()
         then:
         share != null
     }
 
-    def "buildDirectory test"(){
+    def "buildDirectory test"() {
         when:
-        ops.buildDirectory('share/level1/level2',true)
+        ops.buildDirectory('share/level1/level2', true)
         then:
         1 * mockSmbClient.mkdirs('share/level1/level2')
     }
 
-    def "listFiles() throws UnsupportedOperationException"(){
+    def "listFiles() throws UnsupportedOperationException"() {
         when:
         ops.listFiles()
         then:
         thrown UnsupportedOperationException
     }
 
-    def "getCurrentDirectory() throws UnsupportedOperationException"(){
+    def "getCurrentDirectory() throws UnsupportedOperationException"() {
         when:
         ops.getCurrentDirectory()
         then:
         thrown UnsupportedOperationException
     }
 
-    def "changeToParentDirectory() throws UnsupportedOperationException"(){
+    def "changeToParentDirectory() throws UnsupportedOperationException"() {
         when:
         ops.changeToParentDirectory()
         then:
         thrown UnsupportedOperationException
     }
 
-    def "changeCurrentDirectory() throws UnsupportedOperationException"(){
+    def "changeCurrentDirectory() throws UnsupportedOperationException"() {
         when:
         ops.changeCurrentDirectory("somepath")
         then:
         thrown UnsupportedOperationException
     }
 
-    def "deleteFile with exception is rethrown"(){
+    def "deleteFile with exception is rethrown"() {
         when:
         mockSmbClient.deleteFile(_) >> { throw new IOException() }
         ops.deleteFile("file")
@@ -150,7 +150,7 @@ class SmbOperationsSpec extends Specification {
     }
 
 
-    def "existsFile with exception is rethrown"(){
+    def "existsFile with exception is rethrown"() {
         when:
         mockSmbClient.fileExists(_) >> { throw new IOException() }
         ops.existsFile("file")
@@ -158,15 +158,15 @@ class SmbOperationsSpec extends Specification {
         thrown GenericFileOperationFailedException
     }
 
-    def "renameFile with exception is rethrown"(){
+    def "renameFile with exception is rethrown"() {
         when:
-        mockSmbClient.renameFile(_,_) >> { throw new IOException() }
-        ops.renameFile("file","newfile")
+        mockSmbClient.renameFile(_, _) >> { throw new IOException() }
+        ops.renameFile("file", "newfile")
         then:
         thrown GenericFileOperationFailedException
     }
 
-    def "listFiles with exception is rethrown"(){
+    def "listFiles with exception is rethrown"() {
         when:
         mockSmbClient.listFiles(_) >> { throw new IOException() }
         ops.listFiles("dir")
@@ -174,10 +174,10 @@ class SmbOperationsSpec extends Specification {
         thrown GenericFileOperationFailedException
     }
 
-    def "buildDirectory with exception is rethrown"(){
+    def "buildDirectory with exception is rethrown"() {
         when:
         mockSmbClient.mkdirs(_) >> { throw new IOException() }
-        ops.buildDirectory("dir")
+        ops.buildDirectory("dir", true)
         then:
         thrown GenericFileOperationFailedException
     }
@@ -187,10 +187,10 @@ class SmbOperationsSpec extends Specification {
         def ctx = new DefaultCamelContext()
         def exchange = new DefaultExchange(ctx)
         def gf = new GenericFile<SmbFile>()
-        exchange.setProperty(FileComponent.FILE_EXCHANGE_FILE,gf)
-        mockSmbClient.retrieveFile(_,_) >> {throw new IOException()}
+        exchange.setProperty(FileComponent.FILE_EXCHANGE_FILE, gf)
+        mockSmbClient.retrieveFile(_, _) >> { throw new IOException() }
         when:
-        ops.retrieveFile("path/to/file",exchange)
+        ops.retrieveFile("path/to/file", exchange)
         then:
         thrown GenericFileOperationFailedException
     }
@@ -203,7 +203,7 @@ class SmbOperationsSpec extends Specification {
         def stream = IOUtils.toInputStream("Hello camel-smbj!", Charset.defaultCharset())
         message.setBody(stream)
         exchange.setIn(message)
-        mockSmbClient.storeFile(_,_) >> {throw new IOException()}
+        mockSmbClient.storeFile(_, _) >> { throw new IOException() }
         when:
         ops.storeFile("path/to/file", exchange)
         then:
