@@ -106,9 +106,6 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
                     .builder()
                     .withMultiProtocolNegotiate(true)
                     .withDfsEnabled(isDfs())
-                    .withReadBufferSize(5 * 1024 * 1024)
-                    .withTransactBufferSize(5 * 1024 * 1024)
-                    .withWriteBufferSize(5 * 1024 * 1024)
                     .build();
     }
 
