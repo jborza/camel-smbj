@@ -42,8 +42,8 @@ public final class SmbFile {
     }
 
     /**
-     * Last modified time, measured in milliseconds since the epoch
      * see @{@link java.io.File#lastModified()}
+     * @return Last modified time, measured in milliseconds since the epoch
      */
     public long getLastModified() {
         return lastModified;

@@ -85,14 +85,14 @@ public class SmbShare implements AutoCloseable {
     }
 
     /**
-     * Gets the connected share (either resolved by DFS or directly connected)
+     * @return The connected share (either resolved by DFS or directly connected)
      */
     public DiskShare getShare() {
         return share;
     }
 
     /**
-     * Gets the DFS resolved path, if DFS is used. Otherwise the supplied path is returned
+     * @return The DFS resolved path, if DFS is used. Otherwise the supplied path is returned
      */
     public String getPath() {
         return path;
