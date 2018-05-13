@@ -1,12 +1,12 @@
 /**
- *  Copyright [2018] [Juraj Borza]
- *
+ * Copyright [2018] [Juraj Borza]
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,7 @@ public class SmbShare implements AutoCloseable {
     }
 
     private void connect(String targetPath) {
-        session = connectSession(config.getHost());
+        session = connectSession(config.getHost(), config.getPort());
         DfsResolutionResult pathResolutionResult = resolvePlainPath(targetPath);
         path = pathResolutionResult.getSmbPath().getPath();
         share = pathResolutionResult.getDiskShare();
@@ -102,13 +102,17 @@ public class SmbShare implements AutoCloseable {
         return dfs;
     }
 
-    private Session connectSession(String host) {
+    private Session connectSession(String host, int port) {
         try {
-            Connection connection = client.connect(host);
+            Connection connection = client.connect(host, port);
             return connection.authenticate(getAuthenticationContext());
         } catch (IOException e) {
             throw new SmbConnectionException(e);
         }
+    }
+
+    private Session connectSession(String host) {
+        return connectSession(host, SMBClient.DEFAULT_PORT);
     }
 
     private AuthenticationContext getAuthenticationContext() {
@@ -156,7 +160,7 @@ public class SmbShare implements AutoCloseable {
     }
 
     public void rename(String from, String to) {
-        session = connectSession(config.getHost());
+        session = connectSession(config.getHost(), config.getPort());
         DfsResolutionResult resolvedFrom = resolvePlainPath(from);
         DfsResolutionResult resolvedTo = resolvePlainPath(to);
         if (!resolvedFrom.getSmbPath().isOnSameShare(resolvedTo.getSmbPath())) {
@@ -216,8 +220,8 @@ public class SmbShare implements AutoCloseable {
         return true;
     }
 
-    private void mkdirs(Path path){
-        if(!getShare().folderExists(path.getParent().toString()))
+    private void mkdirs(Path path) {
+        if (!getShare().folderExists(path.getParent().toString()))
             mkdirs(path.getParent());
         getShare().mkdir(path.toString());
     }
