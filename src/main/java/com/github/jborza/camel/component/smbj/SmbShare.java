@@ -221,9 +221,11 @@ public class SmbShare implements AutoCloseable {
     }
 
     private void mkdirs(Path path) {
-        if (!getShare().folderExists(path.getParent().toString()))
+        Path parent = path.getParent();
+        if (parent != null && !getShare().folderExists(parent.toString()))
             mkdirs(path.getParent());
-        getShare().mkdir(path.toString());
+        if (!getShare().folderExists(path.toString()))
+            getShare().mkdir(path.toString());
     }
 
     private static File openForWrite(DiskShare share, String name) {
