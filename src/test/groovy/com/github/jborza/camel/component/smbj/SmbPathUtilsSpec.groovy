@@ -27,6 +27,7 @@ class SmbPathUtilsSpec extends Specification {
 
         where:
         path                           | share   | result
+        "share"                        | "share" | ""
         "share\\file.ext"              | "share" | "file.ext"
         "share\\dir\\file.ext"         | "share" | "dir\\file.ext"
         "share\\dir\\subdir\\file.ext" | "share" | "dir\\subdir\\file.ext"
