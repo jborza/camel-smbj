@@ -165,6 +165,26 @@ limitations under the License.
                     </includes>
                 </configuration>
             </plugin>
+            <!-- integration tests-->
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <version>2.21.0</version>
+                <configuration>
+                    <group>groovy.com.github.jborza.camel.component.smbj</group>
+                    <includes>
+                        <include>**/*SpecIT.java</include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- code coverage plugin -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
