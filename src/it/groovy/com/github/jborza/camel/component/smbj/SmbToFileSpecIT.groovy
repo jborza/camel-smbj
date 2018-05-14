@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package groovy.com.github.jborza.camel.component.smbj
+package com.github.jborza.camel.component.smbj
 
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.main.Main
@@ -24,7 +24,7 @@ import spock.lang.Specification
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 
-class FileToSmbSpecIT extends Specification {
+class SmbToFileSpecIT extends Specification {
     static final HOST = "localhost"
     static final PORT = "4445"
     static final USER = "user"
@@ -68,6 +68,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start();
+
         Thread.sleep(10000);
         camelContext.stop();
 

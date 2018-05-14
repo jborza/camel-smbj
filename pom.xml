@@ -130,6 +130,7 @@ limitations under the License.
         <defaultGoal>install</defaultGoal>
 
         <plugins>
+            <!-- compile plugin for Java 8 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -153,6 +154,24 @@ limitations under the License.
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <testSources>
+                        <!--unit tests-->
+                        <testSource>
+                            <directory>${project.basedir}/src/test/groovy</directory>
+                            <includes>
+                                <include>**/*.groovy</include>
+                            </includes>
+                        </testSource>
+                        <!--integration tests-->
+                        <testSource>
+                            <directory>${project.basedir}/src/it/groovy</directory>
+                            <includes>
+                                <include>**/*.groovy</include>
+                            </includes>
+                        </testSource>
+                    </testSources>
+                </configuration>
             </plugin>
             <!-- Only required if names of spec classes don't match default Surefire patterns (`*Test` etc.) -->
             <plugin>
@@ -171,7 +190,6 @@ limitations under the License.
                 <groupId>org.apache.maven.plugins</groupId>
                 <version>2.21.0</version>
                 <configuration>
-                    <group>groovy.com.github.jborza.camel.component.smbj</group>
                     <includes>
                         <include>**/*SpecIT.java</include>
                     </includes>
@@ -198,6 +216,7 @@ limitations under the License.
                     <check/>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 
