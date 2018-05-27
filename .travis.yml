@@ -1,12 +1,19 @@
 language: java
-sudo: false
+sudo: required
+
+services:
+  - docker
 
 jdk:
-    - oraclejdk8
+  - oraclejdk8
 
-script: "mvn cobertura:cobertura"
+before_install:
+  - mkdir /tmp/camel-smbj
+  - docker run --name smb -it -p 4139:139 -p 4445:445 -v /tmp/camel-smbj:/share -d jborza/samba-root -u "user;pass" -s "share;/share;yes;no;yes;user"
+
+install: mvn install -DskipTests=true -Dgpg.skip=true
+
+script: mvn verify cobertura:cobertura
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
-
-install: mvn install -DskipTests=true -Dgpg.skip=true
