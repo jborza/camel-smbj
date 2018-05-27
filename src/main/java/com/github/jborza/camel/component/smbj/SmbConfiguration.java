@@ -75,13 +75,16 @@ public class SmbConfiguration extends GenericFileConfiguration {
         StringBuilder buffer = new StringBuilder();
         buffer.append("smb://");
         buffer.append(getHost());
-        if (getPort() > 0) {
+        if (!isDefaultPort()) {
             buffer.append(":").append(getPort());
         }
         buffer.append("/");
         return buffer.toString();
     }
 
+    public boolean isDefaultPort() {
+        return getPort() <= 0;
+    }
 
     public String getShare() { return share; }
 

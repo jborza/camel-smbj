@@ -63,7 +63,7 @@ public class SmbShare implements AutoCloseable {
     }
 
     private void connect(String targetPath) {
-        session = connectSession(config.getHost(), config.getPort());
+        session = connectSession();
         DfsResolutionResult pathResolutionResult = resolvePlainPath(targetPath);
         path = pathResolutionResult.getSmbPath().getPath();
         share = pathResolutionResult.getDiskShare();
@@ -99,6 +99,13 @@ public class SmbShare implements AutoCloseable {
 
     private boolean isDfs() {
         return dfs;
+    }
+
+    private Session connectSession() {
+        if (config.isDefaultPort())
+            return connectSession(config.getHost());
+        else
+            return connectSession(config.getHost(), config.getPort());
     }
 
     private Session connectSession(String host, int port) {
