@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-mvn clean deploy -P release
+mvn clean deploy -DskipITs -P release
