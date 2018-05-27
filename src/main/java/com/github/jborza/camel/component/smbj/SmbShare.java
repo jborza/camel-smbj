@@ -30,7 +30,6 @@ import com.hierynomus.smbj.connection.Connection;
 import com.hierynomus.smbj.session.Session;
 import com.hierynomus.smbj.share.DiskShare;
 import com.hierynomus.smbj.share.File;
-import org.apache.camel.component.file.GenericFileOperationFailedException;
 import org.apache.camel.util.IOHelper;
 import org.apache.commons.io.IOUtils;
 
@@ -164,19 +163,20 @@ public class SmbShare implements AutoCloseable {
         DfsResolutionResult resolvedFrom = resolvePlainPath(from);
         DfsResolutionResult resolvedTo = resolvePlainPath(to);
         if (!resolvedFrom.getSmbPath().isOnSameShare(resolvedTo.getSmbPath())) {
-            //TODO introduce a specialized exception type
-            throw new GenericFileOperationFailedException("Rename operation failed, " + from + " and " + to + " are on different shares!");
+            throw new AttemptedRenameAcrossSharesException("Rename operation failed, " + from + " and " + to + " are on different shares!");
         }
         DiskShare share = resolvedFrom.getDiskShare();
         EnumSet<AccessMask> renameAttributes = EnumSet.of(AccessMask.FILE_READ_ATTRIBUTES, AccessMask.DELETE, AccessMask.SYNCHRONIZE);
-        File file = share.openFile(resolvedFrom.getSmbPath().getPath(), renameAttributes, null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null);
-        file.rename(resolvedTo.getSmbPath().getPath());
+        try (File file = share.openFile(resolvedFrom.getSmbPath().getPath(), renameAttributes, null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null)) {
+            file.rename(resolvedTo.getSmbPath().getPath());
+        }
     }
 
     public void storeFile(String path, InputStream inputStream) throws IOException {
         connect(path);
-        File file = openForWrite(getShare(), getPath());
-        try (OutputStream outputStream = file.getOutputStream()) {
+        try (File file = openForWrite(getShare(), getPath());
+             OutputStream outputStream = file.getOutputStream()
+        ) {
             IOUtils.copy(inputStream, outputStream, bufferSize);
         }
     }
