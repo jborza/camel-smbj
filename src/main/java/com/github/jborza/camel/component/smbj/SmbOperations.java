@@ -226,18 +226,31 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
         return path.replace('\\', '/');
     }
 
-    private void handleExistingFile(String name) {
+    enum ExistingFileOperationResult {
+        Continue,
+        Ignore
+    }
+
+    private ExistingFileOperationResult handleExistingFile(String name) {
         if (endpoint.getFileExist() == GenericFileExist.Override) {
             deleteFile(name);
+            return ExistingFileOperationResult.Continue;
         } else if (endpoint.getFileExist() == GenericFileExist.Fail) {
             throw new GenericFileOperationFailedException("Cannot write a new file - it already exists: " + name);
+        } else if (endpoint.getFileExist() == GenericFileExist.Ignore) {
+            return ExistingFileOperationResult.Ignore;
         }
+        return ExistingFileOperationResult.Continue;
     }
 
     @Override
     public boolean storeFile(String name, Exchange exchange) {
-        if (existsFile(name))
-            handleExistingFile(name);
+        ExistingFileOperationResult result;
+        if (existsFile(name)) {
+            result = handleExistingFile(name);
+            if (result == ExistingFileOperationResult.Ignore)
+                return false;
+        }
         InputStream inputStream = null;
         try {
             inputStream = exchange.getIn().getMandatoryBody(InputStream.class);
