@@ -166,7 +166,7 @@ public class SmbShare implements AutoCloseable {
     }
 
     public void rename(String from, String to) {
-        session = connectSession(config.getHost(), config.getPort());
+        session = connectSession();
         DfsResolutionResult resolvedFrom = resolvePlainPath(from);
         DfsResolutionResult resolvedTo = resolvePlainPath(to);
         if (!resolvedFrom.getSmbPath().isOnSameShare(resolvedTo.getSmbPath())) {
