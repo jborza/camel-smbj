@@ -99,7 +99,7 @@ class FileToSmbSpecIT extends Specification {
         camelContext.addRoutes(new RouteBuilder() {
             @Override
             void configure() throws Exception {
-                from("file://to-smb?filename=" + TEST_FILENAME)
+                from("file://to-smb?fileName=" + TEST_FILENAME)
                         .to("smb2://localhost:4445/share/output/?username=user&password=pass&fileExist=Ignore")
                         .stop()
             }
@@ -133,7 +133,7 @@ class FileToSmbSpecIT extends Specification {
         camelContext.addRoutes(new RouteBuilder() {
             @Override
             void configure() throws Exception {
-                from("file://to-smb?filename=" + TEST_FILENAME)
+                from("file://to-smb?fileName=" + TEST_FILENAME)
                         .to("smb2://localhost:4445/share/output/?username=user&password=pass&fileExist=Override")
                         .stop()
             }
