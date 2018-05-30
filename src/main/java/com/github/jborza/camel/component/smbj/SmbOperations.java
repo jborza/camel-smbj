@@ -1,12 +1,12 @@
 /**
- *  Copyright [2018] [Juraj Borza]
- *
+ * Copyright [2018] [Juraj Borza]
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,8 @@ import org.apache.camel.component.file.*;
 import org.apache.camel.util.FileUtil;
 import org.apache.camel.util.IOHelper;
 import org.apache.camel.util.ObjectHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.List;
@@ -31,6 +33,8 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
 
     private SmbClient smbClient;
     private GenericFileEndpoint<SmbFile> endpoint;
+
+    protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
     public SmbOperations(SMBClient client) {
         this.client = client;
@@ -56,14 +60,12 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
         }
     }
 
-
     @Override
     public boolean buildDirectory(String directory, boolean absolute) throws GenericFileOperationFailedException {
-        try{
+        try {
             return smbClient.mkdirs(directory);
-        }
-        catch(IOException e){
-            throw new GenericFileOperationFailedException("Could not build directory: "+directory,e);
+        } catch (IOException e) {
+            throw new GenericFileOperationFailedException("Could not build directory: " + directory, e);
         }
     }
 
@@ -226,34 +228,31 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
         return path.replace('\\', '/');
     }
 
-    enum ExistingFileOperationResult {
-        Continue,
-        Ignore
-    }
-
-    private ExistingFileOperationResult handleExistingFile(String name) {
-        if (endpoint.getFileExist() == GenericFileExist.Override) {
-            deleteFile(name);
-            return ExistingFileOperationResult.Continue;
-        } else if (endpoint.getFileExist() == GenericFileExist.Fail) {
-            throw new GenericFileOperationFailedException("Cannot write a new file - it already exists: " + name);
-        } else if (endpoint.getFileExist() == GenericFileExist.Ignore) {
-            return ExistingFileOperationResult.Ignore;
-        }
-        return ExistingFileOperationResult.Continue;
+    private boolean shouldCheckForFileExists() {
+        return endpoint.getFileExist() == GenericFileExist.Fail || endpoint.getFileExist() == GenericFileExist.Override || endpoint.getFileExist() == GenericFileExist.Ignore;
     }
 
     @Override
     public boolean storeFile(String name, Exchange exchange) {
-        ExistingFileOperationResult result;
-        if (existsFile(name)) {
-            result = handleExistingFile(name);
-            if (result == ExistingFileOperationResult.Ignore)
+        if (shouldCheckForFileExists() && existsFile(name)) {
+            if (endpoint.getFileExist() == GenericFileExist.Override && endpoint.isEagerDeleteTargetFile()) {
+                log.debug("Eagerly deleting existing file: {}", name);
+                deleteFile(name);
+            } else if (endpoint.getFileExist() == GenericFileExist.Fail) {
+                throw new GenericFileOperationFailedException("Cannot write a new file - it already exists: " + name);
+            } else if (endpoint.getFileExist() == GenericFileExist.Ignore) {
+                log.debug("A file already exists, ignoring and not overwriting: {}", name);
                 return false;
+            }
         }
+        return doStoreFile(name, exchange);
+    }
+
+    private boolean doStoreFile(String name, Exchange exchange) {
         InputStream inputStream = null;
         try {
             inputStream = exchange.getIn().getMandatoryBody(InputStream.class);
+            log.debug("Storing file: {}", name);
             smbClient.storeFile(name, inputStream);
             return true;
         } catch (Exception e) {
