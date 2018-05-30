@@ -31,11 +31,14 @@ class FileToSmbSpecIT extends Specification {
     static final PASS = "pass"
     static final SHARE = "share"
 
+    static final TEST_FILENAME = "file-to-smb.txt"
+    static final NEW_CONTENT = "Hello, camel-smbj!"
+
     def getSmbUri() {
         return "smb2://${HOST}:${PORT}/${SHARE}?username=${USER}&password=${PASS}"
     }
 
-    def getTempDir() {
+    def getSambaRootDir() {
         if (isWindows())
             return "c:\\temp\\camel-smbj"
         else
@@ -48,14 +51,14 @@ class FileToSmbSpecIT extends Specification {
 
     def setup() {
         //clear samba target directory
-        File directory = new File(getTempDir())
+        File directory = new File(getSambaRootDir())
         FileUtils.cleanDirectory(directory)
         //prepare file to copy
         File subDir = new File("to-smb");
         if (!subDir.exists())
             subDir.mkdir();
-        File target = new File(Paths.get("to-smb", "file-to-smb.txt").toString());
-        FileUtils.writeStringToFile(target, "Hello, camel-smbj!", StandardCharsets.UTF_8);
+        File target = new File(Paths.get("to-smb", TEST_FILENAME).toString());
+        FileUtils.writeStringToFile(target, NEW_CONTENT, StandardCharsets.UTF_8);
     }
 
     def "one file from file to smb"() {
@@ -67,6 +70,7 @@ class FileToSmbSpecIT extends Specification {
             void configure() throws Exception {
                 from("file://to-smb")
                         .to("smb2://localhost:4445/share/output/?username=user&password=pass")
+                        .stop()
             }
         })
         camelContext.start();
@@ -74,9 +78,76 @@ class FileToSmbSpecIT extends Specification {
         camelContext.stop();
 
         then:
-        File target = new File(Paths.get(getTempDir(), "output", "file-to-smb.txt").toString());
+        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString());
         target.exists() == true
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
-        content == "Hello, camel-smbj!"
+        content == NEW_CONTENT
     }
+
+    def "one file from file to subdirectory in smb with fileExist=Ignore option doesn't overwrite it"() {
+        when:
+        //prepare the file so it already exists
+        File directory = new File(getSambaRootDir()+"/output")
+        directory.mkdir()
+        File existingFile = new File(getSambaRootDir() + "/output/" + TEST_FILENAME);
+        def originalContent = "original content"
+        FileUtils.writeStringToFile(existingFile, originalContent, StandardCharsets.UTF_8)
+
+        //set up camel context
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("file://to-smb?filename=" + TEST_FILENAME)
+                        .to("smb2://localhost:4445/share/output/?username=user&password=pass&fileExist=Ignore")
+                        .stop()
+            }
+        })
+        camelContext.start();
+        Thread.sleep(10000);
+        camelContext.stop();
+
+        then:
+        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString());
+        target.exists() == true
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        //and definitely not NEW_CONTENT
+        content != NEW_CONTENT
+        content == originalContent
+    }
+
+
+    def "one file from file to subdirectory in smb with fileExist=Override option does overwrite it"() {
+        when:
+        //prepare the file so it already exists
+        File directory = new File(getSambaRootDir()+"/output")
+        directory.mkdir()
+        File existingFile = new File(getSambaRootDir() + "/output/" + TEST_FILENAME);
+        def originalContent = "original content"
+        FileUtils.writeStringToFile(existingFile, originalContent, StandardCharsets.UTF_8)
+
+        //set up camel context
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("file://to-smb?filename=" + TEST_FILENAME)
+                        .to("smb2://localhost:4445/share/output/?username=user&password=pass&fileExist=Override")
+                        .stop()
+            }
+        })
+        camelContext.start();
+        Thread.sleep(10000);
+        camelContext.stop();
+
+        then:
+        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString());
+        target.exists() == true
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        content != originalContent
+        content == NEW_CONTENT
+    }
+
 }

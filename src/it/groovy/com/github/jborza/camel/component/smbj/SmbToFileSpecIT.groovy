@@ -47,6 +47,7 @@ class SmbToFileSpecIT extends Specification {
     }
 
     def setup() {
+        //clear samba target directory
         File directory = new File(getTempDir())
         FileUtils.cleanDirectory(directory)
         File subDir = new File(getTempDir() + File.separator + "dir");
@@ -64,7 +65,7 @@ class SmbToFileSpecIT extends Specification {
             void configure() throws Exception {
                 from("smb2://localhost:4445/share/dir/?username=user&password=pass")
                         .to("file://from-smb")
-                        .to("log://block")
+                        .stop()
             }
         })
         camelContext.start();
