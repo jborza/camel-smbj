@@ -90,9 +90,7 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
         return answer;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     public SmbOperations createSmbOperations() {
-
         SmbConfig config = createSmbConfig();
 
         SMBClient client = new SMBClient(config);

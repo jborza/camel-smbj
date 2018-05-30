@@ -18,6 +18,7 @@ package com.github.jborza.camel.component.smbj;
 
 import org.apache.camel.component.file.GenericFileOperationFailedException;
 
+@SuppressWarnings("serial")
 public class AttemptedRenameAcrossSharesException extends GenericFileOperationFailedException {
     public AttemptedRenameAcrossSharesException(String message) {
         super(message);

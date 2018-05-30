@@ -16,6 +16,7 @@
 
 package com.github.jborza.camel.component.smbj;
 
+@SuppressWarnings("serial")
 public class SmbConnectionException extends RuntimeException {
     public SmbConnectionException(Throwable t){
         super(t);
