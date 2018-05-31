@@ -24,7 +24,10 @@ import org.apache.camel.component.file.GenericFileConsumer;
 import org.apache.camel.component.file.GenericFileEndpoint;
 import org.apache.camel.component.file.GenericFileOperations;
 
+import java.nio.file.attribute.DosFileAttributes;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SmbConsumer extends GenericFileConsumer<SmbFile> {
 
@@ -97,7 +100,17 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
         f.setFileName(currentRelativePath + info.getFileName());
         f.setRelativeFilePath(info.getFileName());
         f.setDirectory(info.isDirectory());
+        f.setExtendedAttributes(getExtendedAttributes(info));
         return f;
+    }
+
+    private Map<String,Object> getExtendedAttributes(SmbFile info){
+        Map<String,Object> attrs = new HashMap<>();
+        attrs.put(FileDirectoryAttributes.DOS_ARCHIVE,info.isArchive());
+        attrs.put(FileDirectoryAttributes.DOS_HIDDEN,info.isHidden());
+        attrs.put(FileDirectoryAttributes.DOS_READONLY,info.isReadOnly());
+        attrs.put(FileDirectoryAttributes.DOS_SYSTEM,info.isSystem());
+        return attrs;
     }
 
     @Override

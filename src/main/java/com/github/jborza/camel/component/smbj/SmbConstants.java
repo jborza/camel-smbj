@@ -17,7 +17,12 @@
 package com.github.jborza.camel.component.smbj;
 
 public final class SmbConstants {
-    public final static long FILE_ATTRIBUTE_DIRECTORY = 16L;
+    //see [MS-FSCC].pdf 2.6 File Attributes.
+    public final static long FILE_ATTRIBUTE_DIRECTORY = 0x10L;
+    public final static long FILE_ATTRIBUTE_READONLY = 0x1L;
+    public final static long FILE_ATTRIBUTE_HIDDEN = 0x2L;
+    public final static long FILE_ATTRIBUTE_ARCHIVE = 0x20L;
+    public final static long FILE_ATTRIBUTE_SYSTEM = 0x4L;
     public final static String PARENT_DIRECTORY = "..";
     public final static String CURRENT_DIRECTORY = ".";
 }

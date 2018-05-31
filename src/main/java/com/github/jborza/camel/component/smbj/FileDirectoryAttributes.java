@@ -19,11 +19,42 @@ package com.github.jborza.camel.component.smbj;
 import com.hierynomus.msfscc.fileinformation.FileIdBothDirectoryInformation;
 
 public final class FileDirectoryAttributes {
+    public static final String DOS_ARCHIVE = "dos:archive";
+    public static final String DOS_HIDDEN = "dos:hidden";
+    public static final String DOS_READONLY = "dos:readonly";
+    public static final String DOS_SYSTEM = "dos:system";
+
     public static boolean isDirectory(FileIdBothDirectoryInformation info) {
         return (info.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_DIRECTORY) == SmbConstants.FILE_ATTRIBUTE_DIRECTORY;
     }
 
     public static long getLastModified(FileIdBothDirectoryInformation info) {
         return info.getLastWriteTime().toEpochMillis();
+    }
+
+
+    public static boolean isArchive(FileIdBothDirectoryInformation info) {
+        return (info.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_ARCHIVE) == SmbConstants.FILE_ATTRIBUTE_ARCHIVE;
+    }
+
+    public static boolean isHidden(FileIdBothDirectoryInformation info) {
+        return (info.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_HIDDEN) == SmbConstants.FILE_ATTRIBUTE_HIDDEN;
+    }
+
+    public static boolean isReadOnly(FileIdBothDirectoryInformation info) {
+        return (info.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_READONLY) == SmbConstants.FILE_ATTRIBUTE_READONLY;
+    }
+
+    public static boolean isSystem(FileIdBothDirectoryInformation info) {
+        return (info.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_SYSTEM) == SmbConstants.FILE_ATTRIBUTE_SYSTEM;
+    }
+
+    public static boolean isSpecialDirectory(FileIdBothDirectoryInformation info) {
+        if (isDirectory(info)) {
+            if (info.getFileName().equals(SmbConstants.CURRENT_DIRECTORY) || info.getFileName().equals(SmbConstants.PARENT_DIRECTORY))
+                return true;
+        }
+
+        return false;
     }
 }

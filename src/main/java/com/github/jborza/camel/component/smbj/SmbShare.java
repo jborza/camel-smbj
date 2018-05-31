@@ -198,7 +198,8 @@ public class SmbShare implements AutoCloseable {
                 if (f.getFileName().equals(CURRENT_DIRECTORY) || f.getFileName().equals(PARENT_DIRECTORY))
                     continue;
             }
-            files.add(new SmbFile(isDirectory, f.getFileName(), f.getEndOfFile(), FileDirectoryAttributes.getLastModified(f)));
+            files.add(new SmbFile(isDirectory, f.getFileName(), f.getEndOfFile(), FileDirectoryAttributes.getLastModified(f),
+                    FileDirectoryAttributes.isArchive(f), FileDirectoryAttributes.isHidden(f), FileDirectoryAttributes.isReadOnly(f), FileDirectoryAttributes.isSystem(f)));
         }
         return files;
     }

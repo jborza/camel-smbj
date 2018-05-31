@@ -18,19 +18,43 @@ package com.github.jborza.camel.component.smbj;
 
 public final class SmbFile {
     private final boolean isDirectory;
+    private final boolean isArchive;
+    private final boolean isHidden;
+    private final boolean isReadOnly;
+    private final boolean isSystem;
     private final String fileName;
     private final long fileLength;
     private final long lastModified;
 
-    public SmbFile(boolean isDirectory, String fileName, long fileLength, long lastModified) {
+    public SmbFile(boolean isDirectory, String fileName, long fileLength, long lastModified, boolean isArchive, boolean isHidden, boolean isReadOnly, boolean isSystem) {
         this.isDirectory = isDirectory;
         this.fileName = fileName;
         this.fileLength = fileLength;
         this.lastModified = lastModified;
+        this.isArchive = isArchive;
+        this.isHidden = isHidden;
+        this.isReadOnly = isReadOnly;
+        this.isSystem = isSystem;
     }
 
     public boolean isDirectory() {
         return isDirectory;
+    }
+
+    public boolean isArchive(){
+        return isArchive;
+    }
+
+    public boolean isHidden(){
+        return isHidden;
+    }
+
+    public boolean isReadOnly(){
+        return isReadOnly;
+    }
+
+    public boolean isSystem(){
+        return isSystem;
     }
 
     public String getFileName() {
