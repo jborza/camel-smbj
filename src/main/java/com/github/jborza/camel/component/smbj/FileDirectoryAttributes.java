@@ -32,7 +32,6 @@ public final class FileDirectoryAttributes {
         return info.getLastWriteTime().toEpochMillis();
     }
 
-
     public static boolean isArchive(FileIdBothDirectoryInformation info) {
         return (info.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_ARCHIVE) == SmbConstants.FILE_ATTRIBUTE_ARCHIVE;
     }
@@ -47,14 +46,5 @@ public final class FileDirectoryAttributes {
 
     public static boolean isSystem(FileIdBothDirectoryInformation info) {
         return (info.getFileAttributes() & SmbConstants.FILE_ATTRIBUTE_SYSTEM) == SmbConstants.FILE_ATTRIBUTE_SYSTEM;
-    }
-
-    public static boolean isSpecialDirectory(FileIdBothDirectoryInformation info) {
-        if (isDirectory(info)) {
-            if (info.getFileName().equals(SmbConstants.CURRENT_DIRECTORY) || info.getFileName().equals(SmbConstants.PARENT_DIRECTORY))
-                return true;
-        }
-
-        return false;
     }
 }

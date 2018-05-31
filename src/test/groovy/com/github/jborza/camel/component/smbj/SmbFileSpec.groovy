@@ -21,14 +21,20 @@ import spock.lang.Specification
 class SmbFileSpec extends Specification {
     def "should correctly process constructor"() {
         expect:
-        def file = new SmbFile(isDirectory, fileName, fileLength, lastModified)
+        def file = new SmbFile(isDirectory, fileName, fileLength, lastModified, isArchive, isHidden, isReadonly, isSystem)
         file.isDirectory() == isDirectory
         file.getFileName() == fileName
         file.getFileLength() == fileLength
         file.lastModified == lastModified
+        file.isArchive() == isArchive
+        file.isHidden() == isHidden
+        file.isReadOnly() == isReadonly
+        file.isSystem() == isSystem
 
         where:
-        isDirectory | fileName   | fileLength   | lastModified
-        true        | "file.fil" | 12345678910L | 1261207195000L
+        isDirectory | fileName   | fileLength   | lastModified   | isArchive | isHidden | isReadonly | isSystem
+        true        | "file.fil" | 12345678910L | 1261207195000L | true      | true     | true       | true
+        false       | "file.fil" | 123L         | 1261207195000L | true      | false    | false      | false
+        false       | "file.fil" | 123L         | 1261207195000L | false     | true     | false      | true
     }
 }

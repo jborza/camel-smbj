@@ -24,20 +24,19 @@ import org.apache.camel.component.file.GenericFileConsumer;
 import org.apache.camel.component.file.GenericFileEndpoint;
 import org.apache.camel.component.file.GenericFileOperations;
 
-import java.nio.file.attribute.DosFileAttributes;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class SmbConsumer extends GenericFileConsumer<SmbFile> {
 
     private final String endpointPath;
     private final String currentRelativePath = "";
+    private GenericFileConverter genericFileConverter;
 
     public SmbConsumer(GenericFileEndpoint<SmbFile> endpoint, Processor processor, GenericFileOperations<SmbFile> operations) {
         super(endpoint, processor, operations);
         SmbConfiguration config = (SmbConfiguration) endpoint.getConfiguration();
         this.endpointPath = config.getShare() + "\\" + config.getPath();
+        genericFileConverter = new GenericFileConverter();
     }
 
     @Override
@@ -54,7 +53,7 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
             if (!canPollMoreFiles(fileList)) {
                 return false;
             }
-            GenericFile<SmbFile> gf = asGenericFile(fileName, smbFile);
+            GenericFile<SmbFile> gf = genericFileConverter.asGenericFile(fileName, smbFile, endpointPath, currentRelativePath);
             if (gf.isDirectory()) {
                 if (endpoint.isRecursive() && currentDepth < endpoint.getMaxDepth()) {
                     //recursive scan of the subdirectory
@@ -86,31 +85,6 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
         if (modified >= 0) {
             message.setHeader(Exchange.FILE_LAST_MODIFIED, modified);
         }
-    }
-
-    private GenericFile<SmbFile> asGenericFile(String path, SmbFile info) {
-        GenericFile<SmbFile> f = new GenericFile<>();
-        f.setAbsoluteFilePath(path + f.getFileSeparator() + info.getFileName());
-        f.setAbsolute(true);
-        f.setEndpointPath(endpointPath);
-        f.setFileNameOnly(info.getFileName());
-        f.setFileLength(info.getFileLength());
-        f.setFile(info);
-        f.setLastModified(info.getLastModified());
-        f.setFileName(currentRelativePath + info.getFileName());
-        f.setRelativeFilePath(info.getFileName());
-        f.setDirectory(info.isDirectory());
-        f.setExtendedAttributes(getExtendedAttributes(info));
-        return f;
-    }
-
-    private Map<String,Object> getExtendedAttributes(SmbFile info){
-        Map<String,Object> attrs = new HashMap<>();
-        attrs.put(FileDirectoryAttributes.DOS_ARCHIVE,info.isArchive());
-        attrs.put(FileDirectoryAttributes.DOS_HIDDEN,info.isHidden());
-        attrs.put(FileDirectoryAttributes.DOS_READONLY,info.isReadOnly());
-        attrs.put(FileDirectoryAttributes.DOS_SYSTEM,info.isSystem());
-        return attrs;
     }
 
     @Override
