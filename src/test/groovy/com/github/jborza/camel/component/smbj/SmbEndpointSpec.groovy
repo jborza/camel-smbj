@@ -16,6 +16,7 @@
 
 package com.github.jborza.camel.component.smbj
 
+import org.apache.camel.main.Main
 import spock.lang.Specification
 
 class SmbEndpointSpec extends Specification {
@@ -28,7 +29,7 @@ class SmbEndpointSpec extends Specification {
 
         then:
         endpoint.getScheme() == "smb2"
-        endpoint.getFileSeparator() == "/"
+        endpoint.getFileSeparator() == '/'
         endpoint.isAbsolute() == true
         endpoint.isSingleton() == false
     }
@@ -51,10 +52,57 @@ class SmbEndpointSpec extends Specification {
         def component = Mock(SmbComponent)
         def config = new SmbConfiguration(new URI(uri))
         def endpoint = new SmbEndpoint(uri, component, config)
+        //Camel usually sets this from URL
         endpoint.setDfs(expectedDfs)
         endpoint.isDfs() == expectedDfs
 
         where:
         expectedDfs << [true, false]
+    }
+
+    def "createProducer returns SmbProducer"() {
+        given:
+        def uri = "smb2://server/share?dfs=true"
+        def component = Mock(SmbComponent)
+        def config = new SmbConfiguration(new URI(uri))
+        def endpoint = new SmbEndpoint(uri, component, config)
+        when:
+        def producer = endpoint.createProducer()
+        then:
+        producer in SmbProducer
+    }
+
+
+    def "createConsumer returns SmbConsumer"() {
+        given:
+        def uri = "smb2://server/share?dfs=true"
+        def component = Mock(SmbComponent)
+        def config = new SmbConfiguration(new URI(uri))
+        def endpoint = new SmbEndpoint(uri, component, config)
+        when:
+        def consumer = endpoint.createConsumer(null)
+        then:
+        consumer in SmbConsumer
+    }
+
+    def createCamelContext() {
+        def main = new Main()
+        return main.getOrCreateCamelContext()
+    }
+
+    def "createConsumer throws exception if both delete and move are enabled"() {
+        given:
+        def context = createCamelContext()
+        def uri = "smb2://server/share?delete=true&move=true"
+        def component = new SmbComponent(context)
+        def config = new SmbConfiguration(new URI(uri))
+        def endpoint = new SmbEndpoint(uri, component, config)
+        //Camel usually sets this from URL
+        endpoint.setDelete(true)
+        endpoint.setMove(".moved")
+        when:
+        def consumer = endpoint.createConsumer(null)
+        then:
+        thrown(IllegalArgumentException)
     }
 }

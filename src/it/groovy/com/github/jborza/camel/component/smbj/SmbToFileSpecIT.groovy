@@ -1,7 +1,7 @@
 /**
  *  Copyright [2018] [Juraj Borza]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -50,10 +50,10 @@ class SmbToFileSpecIT extends Specification {
         //clear samba target directory
         File directory = new File(getTempDir())
         FileUtils.cleanDirectory(directory)
-        File subDir = new File(getTempDir() + File.separator + "dir");
-        subDir.mkdir();
-        File srcFile = new File(getTempDir() + File.separator + "dir" + File.separator + "test.txt");
-        FileUtils.writeStringToFile(srcFile, "Hello, world!", StandardCharsets.UTF_8);
+        File subDir = new File(getTempDir() + File.separator + "dir")
+        subDir.mkdir()
+        File srcFile = new File(getTempDir() + File.separator + "dir" + File.separator + "test.txt")
+        FileUtils.writeStringToFile(srcFile, "Hello, world!", StandardCharsets.UTF_8)
     }
 
     def "one file from smb to file"() {
@@ -68,13 +68,13 @@ class SmbToFileSpecIT extends Specification {
                         .stop()
             }
         })
-        camelContext.start();
+        camelContext.start()
 
-        Thread.sleep(10000);
-        camelContext.stop();
+        Thread.sleep(10000)
+        camelContext.stop()
 
         then:
-        File target = new File(Paths.get("from-smb", "test.txt").toString());
+        File target = new File(Paths.get("from-smb", "test.txt").toString())
         target.exists() == true
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         content == "Hello, world!"

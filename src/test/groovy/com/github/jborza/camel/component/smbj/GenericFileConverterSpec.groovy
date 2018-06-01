@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package groovy.com.github.jborza.camel.component.smbj
+package com.github.jborza.camel.component.smbj
 
-import com.github.jborza.camel.component.smbj.GenericFileConverter
-import com.github.jborza.camel.component.smbj.SmbFile
 import spock.lang.Specification
 
 class GenericFileConverterSpec extends Specification {

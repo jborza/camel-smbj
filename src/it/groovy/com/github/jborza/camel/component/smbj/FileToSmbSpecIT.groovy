@@ -54,11 +54,11 @@ class FileToSmbSpecIT extends Specification {
         File directory = new File(getSambaRootDir())
         FileUtils.cleanDirectory(directory)
         //prepare file to copy
-        File subDir = new File("to-smb");
+        File subDir = new File("to-smb")
         if (!subDir.exists())
-            subDir.mkdir();
-        File target = new File(Paths.get("to-smb", TEST_FILENAME).toString());
-        FileUtils.writeStringToFile(target, NEW_CONTENT, StandardCharsets.UTF_8);
+            subDir.mkdir()
+        File target = new File(Paths.get("to-smb", TEST_FILENAME).toString())
+        FileUtils.writeStringToFile(target, NEW_CONTENT, StandardCharsets.UTF_8)
     }
 
     def "one file from file to smb"() {
@@ -73,12 +73,12 @@ class FileToSmbSpecIT extends Specification {
                         .stop()
             }
         })
-        camelContext.start();
-        Thread.sleep(10000);
-        camelContext.stop();
+        camelContext.start()
+        Thread.sleep(10000)
+        camelContext.stop()
 
         then:
-        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString());
+        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
         target.exists() == true
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         content == NEW_CONTENT
@@ -89,7 +89,7 @@ class FileToSmbSpecIT extends Specification {
         //prepare the file so it already exists
         File directory = new File(getSambaRootDir()+"/output")
         directory.mkdir()
-        File existingFile = new File(getSambaRootDir() + "/output/" + TEST_FILENAME);
+        File existingFile = new File(getSambaRootDir() + "/output/" + TEST_FILENAME)
         def originalContent = "original content"
         FileUtils.writeStringToFile(existingFile, originalContent, StandardCharsets.UTF_8)
 
@@ -104,12 +104,12 @@ class FileToSmbSpecIT extends Specification {
                         .stop()
             }
         })
-        camelContext.start();
-        Thread.sleep(10000);
-        camelContext.stop();
+        camelContext.start()
+        Thread.sleep(10000)
+        camelContext.stop()
 
         then:
-        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString());
+        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
         target.exists() == true
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         //and definitely not NEW_CONTENT
@@ -123,7 +123,7 @@ class FileToSmbSpecIT extends Specification {
         //prepare the file so it already exists
         File directory = new File(getSambaRootDir()+"/output")
         directory.mkdir()
-        File existingFile = new File(getSambaRootDir() + "/output/" + TEST_FILENAME);
+        File existingFile = new File(getSambaRootDir() + "/output/" + TEST_FILENAME)
         def originalContent = "original content"
         FileUtils.writeStringToFile(existingFile, originalContent, StandardCharsets.UTF_8)
 
@@ -138,12 +138,12 @@ class FileToSmbSpecIT extends Specification {
                         .stop()
             }
         })
-        camelContext.start();
-        Thread.sleep(10000);
-        camelContext.stop();
+        camelContext.start()
+        Thread.sleep(10000)
+        camelContext.stop()
 
         then:
-        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString());
+        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
         target.exists() == true
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         content != originalContent
