@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.github.jborza.camel.component.smbj;
+package com.github.jborza.camel.component.smbj.exceptions;
 
 import org.apache.camel.component.file.GenericFileOperationFailedException;
 
 @SuppressWarnings("serial")
-public class AttemptedRenameAcrossSharesException extends GenericFileOperationFailedException {
-    public AttemptedRenameAcrossSharesException(String message) {
+public class FileAlreadyExistsException extends GenericFileOperationFailedException {
+    public FileAlreadyExistsException(String message) {
         super(message);
     }
 }

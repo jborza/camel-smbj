@@ -18,6 +18,7 @@ package com.github.jborza.camel.component.smbj;
 
 import com.github.jborza.camel.component.smbj.dfs.DfsResolutionResult;
 import com.github.jborza.camel.component.smbj.dfs.DfsResolver;
+import com.github.jborza.camel.component.smbj.exceptions.AttemptedRenameAcrossSharesException;
 import com.hierynomus.msdtyp.AccessMask;
 import com.hierynomus.msfscc.fileinformation.FileIdBothDirectoryInformation;
 import com.hierynomus.mssmb2.SMB2CreateDisposition;

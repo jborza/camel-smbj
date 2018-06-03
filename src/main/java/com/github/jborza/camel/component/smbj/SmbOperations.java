@@ -16,6 +16,7 @@
 
 package com.github.jborza.camel.component.smbj;
 
+import com.github.jborza.camel.component.smbj.exceptions.FileAlreadyExistsException;
 import com.hierynomus.smbj.SMBClient;
 import org.apache.camel.Exchange;
 import org.apache.camel.component.file.*;
@@ -239,7 +240,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
                 log.debug("Eagerly deleting existing file: {}", name);
                 deleteFile(name);
             } else if (endpoint.getFileExist() == GenericFileExist.Fail) {
-                throw new GenericFileOperationFailedException("Cannot write a new file - it already exists: " + name);
+                throw new FileAlreadyExistsException("Cannot write a new file - it already exists: " + name);
             } else if (endpoint.getFileExist() == GenericFileExist.Ignore) {
                 log.debug("A file already exists, ignoring and not overwriting: {}", name);
                 return false;
