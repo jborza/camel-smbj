@@ -54,6 +54,7 @@ class SmbToFileSpecIT extends Specification {
         FileUtils.cleanDirectory(directory)
         //clear up destination
         File targetDirectory = new File("from-smb")
+        FileUtils.forceMkdir(targetDirectory)
         FileUtils.cleanDirectory(targetDirectory)
     }
 
