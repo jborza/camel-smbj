@@ -66,8 +66,12 @@ public class SmbShare implements AutoCloseable {
     private void connect(String targetPath) {
         session = connectSession();
         DfsResolutionResult pathResolutionResult = resolvePlainPath(targetPath);
-        path = pathResolutionResult.getSmbPath().getPath();
+        path = removeLeadingBackslash(pathResolutionResult.getSmbPath().getPath());
         share = pathResolutionResult.getDiskShare();
+    }
+
+    private String removeLeadingBackslash(String path) {
+        return path.replaceAll("^\\\\", "");
     }
 
     private DfsResolutionResult resolvePlainPath(String targetPath) {
@@ -212,12 +216,12 @@ public class SmbShare implements AutoCloseable {
         IOHelper.copyAndCloseInput(is, os, bufferSize);
     }
 
-    public boolean fileExists(String path) throws IOException {
+    public boolean fileExists(String path) {
         connect(path);
         return getShare().fileExists(getPath());
     }
 
-    public void deleteFile(String path) throws IOException {
+    public void deleteFile(String path) {
         connect(path);
         getShare().rm(getPath());
     }
