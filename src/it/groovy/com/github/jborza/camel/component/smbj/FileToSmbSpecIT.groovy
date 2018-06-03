@@ -82,7 +82,7 @@ class FileToSmbSpecIT extends Specification {
 
         then:
         File target = new File(Paths.get(getSambaRootDir(), TEST_FILENAME).toString())
-        target.exists() == true
+        target.exists()
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         content == NEW_CONTENT
     }
@@ -105,7 +105,7 @@ class FileToSmbSpecIT extends Specification {
 
         then:
         File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
-        target.exists() == true
+        target.exists()
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         content == NEW_CONTENT
     }
@@ -136,7 +136,7 @@ class FileToSmbSpecIT extends Specification {
 
         then:
         File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
-        target.exists() == true
+        target.exists()
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         //and definitely not NEW_CONTENT
         content != NEW_CONTENT
@@ -170,7 +170,7 @@ class FileToSmbSpecIT extends Specification {
 
         then:
         File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
-        target.exists() == true
+        target.exists()
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         content != originalContent
         content == NEW_CONTENT
@@ -202,7 +202,7 @@ class FileToSmbSpecIT extends Specification {
 
         then:
         File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
-        target.exists() == true
+        target.exists()
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         content != originalContent
         content == NEW_CONTENT
@@ -237,13 +237,13 @@ class FileToSmbSpecIT extends Specification {
 
         then:
         File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
-        target.exists() == true
+        target.exists()
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         content != originalContent
         content == NEW_CONTENT
         //also assert that the temporary file no longer exists
         File tempTarget = new File(Paths.get(getSambaRootDir(), "output", "smbj." + TEST_FILENAME).toString())
-        tempTarget.exists() == false
+        tempTarget.exists()
     }
 
     def "one file from file to subdirectory in smb with fileExist=Override&eagerDelete=true does overwrite"() {
@@ -272,7 +272,7 @@ class FileToSmbSpecIT extends Specification {
 
         then:
         File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
-        target.exists() == true
+        target.exists()
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         content != originalContent
         content == NEW_CONTENT
@@ -299,7 +299,7 @@ class FileToSmbSpecIT extends Specification {
                     @Override
                     void process(Exchange exchange) throws Exception {
                         thrownFileAlreadyExistsException = true
-                        camelContext.stop();
+                        camelContext.stop()
                     }
                 })
                 from("file://to-smb?fileName=" + TEST_FILENAME)
@@ -315,7 +315,7 @@ class FileToSmbSpecIT extends Specification {
         thrownFileAlreadyExistsException == true
         //original file not overwritten
         File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
-        target.exists() == true
+        target.exists()
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         // definitely not NEW_CONTENT
         content != NEW_CONTENT

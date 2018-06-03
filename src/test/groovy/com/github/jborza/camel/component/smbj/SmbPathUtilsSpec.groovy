@@ -51,7 +51,7 @@ class SmbPathUtilsSpec extends Specification {
         def result = SmbPathUtils.removeShareName(path, share, false)
         then:
         result == Paths.get("dir", "subdir").toString()
-        result.startsWith(share) == false
+        !result.startsWith(share)
     }
 
     def "should convert to backslashes"() {

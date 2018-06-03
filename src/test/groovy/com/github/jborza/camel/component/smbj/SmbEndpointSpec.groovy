@@ -30,8 +30,8 @@ class SmbEndpointSpec extends Specification {
         then:
         endpoint.getScheme() == "smb2"
         endpoint.getFileSeparator() == '/'
-        endpoint.isAbsolute() == true
-        endpoint.isSingleton() == false
+        endpoint.isAbsolute()
+        !endpoint.isSingleton()
     }
 
     def "should create operations"() {

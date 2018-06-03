@@ -31,6 +31,8 @@ class SmbToFileSpecIT extends Specification {
     static final PASS = "pass"
     static final SHARE = "share"
 
+    final CONTENT = "Hello, SmbToFile content!"
+
     def getSmbUri() {
         return "smb2://${HOST}:${PORT}/${SHARE}?username=${USER}&password=${PASS}"
     }
@@ -50,14 +52,21 @@ class SmbToFileSpecIT extends Specification {
         //clear samba target directory
         File directory = new File(getTempDir())
         FileUtils.cleanDirectory(directory)
-        File subDir = new File(getTempDir() + File.separator + "dir")
-        subDir.mkdir()
-        File srcFile = new File(getTempDir() + File.separator + "dir" + File.separator + "test.txt")
-        FileUtils.writeStringToFile(srcFile, "Hello, world!", StandardCharsets.UTF_8)
+        //clear up destination
+        File targetDirectory = new File("from-smb")
+        FileUtils.cleanDirectory(targetDirectory)
     }
 
-    def "one file from smb to file"() {
+    def setupDirectoryWithFile() {
+        File subDir = new File(Paths.get(getTempDir(), "dir").toString())
+        subDir.mkdir()
+        File srcFile = new File(Paths.get(getTempDir(), "dir", "test.txt").toString())
+        FileUtils.writeStringToFile(srcFile, CONTENT, StandardCharsets.UTF_8)
+    }
+
+    def "one file from smb directory to file"() {
         when:
+        setupDirectoryWithFile()
         def main = new Main()
         def camelContext = main.getOrCreateCamelContext()
         camelContext.addRoutes(new RouteBuilder() {
@@ -75,9 +84,102 @@ class SmbToFileSpecIT extends Specification {
 
         then:
         File target = new File(Paths.get("from-smb", "test.txt").toString())
-        target.exists() == true
+        target.exists()
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
-        content == "Hello, world!"
+        content == CONTENT
+    }
 
+    def "one file from smb root to file"() {
+        when:
+        File srcFile = new File(Paths.get(getTempDir(), "test.txt").toString())
+        FileUtils.writeStringToFile(srcFile, CONTENT, StandardCharsets.UTF_8)
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("smb2://localhost:4445/share/?username=user&password=pass")
+                        .to("file://from-smb")
+                        .stop()
+            }
+        })
+        camelContext.start()
+
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        File target = new File(Paths.get("from-smb", "test.txt").toString())
+        target.exists()
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        content == CONTENT
+    }
+
+    def "more files from smb directory to file"() {
+        when:
+        for (def i = 0; i < 10; i++) {
+            File srcFile = new File(Paths.get(getTempDir(), "dir", "test" + i + ".txt").toString())
+            FileUtils.writeStringToFile(srcFile, "data" + i, StandardCharsets.UTF_8)
+        }
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("smb2://localhost:4445/share/dir/?username=user&password=pass")
+                        .to("file://from-smb")
+                        .stop()
+            }
+        })
+        camelContext.start()
+
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        File targetDirectory = new File("from-smb")
+        targetDirectory.list().size() == 10
+        for (def i = 0; i < 10; i++) {
+            File target = new File(Paths.get("from-smb", "test" + i + ".txt").toString())
+            target.exists()
+            String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+            content == "data" + i
+        }
+    }
+
+    def "recursive smb folder to file"() {
+        when:
+        //prepare subfolders
+        File subDir1 = new File(Paths.get(getTempDir(), "a", "b", "c1").toString())
+        subDir1.mkdirs()
+        File subDir2 = new File(Paths.get(getTempDir(), "a", "b", "c2").toString())
+        subDir2.mkdirs()
+
+        File srcFile1 = new File(Paths.get(getTempDir(), "a", "b", "c1", "testabc1.txt").toString())
+        FileUtils.writeStringToFile(srcFile1, CONTENT, StandardCharsets.UTF_8)
+        File srcFile2 = new File(Paths.get(getTempDir(), "a", "b", "c2", "testabc2.txt").toString())
+        FileUtils.writeStringToFile(srcFile2, CONTENT, StandardCharsets.UTF_8)
+        File srcFile3 = new File(Paths.get(getTempDir(), "a", "b", "testab.txt").toString())
+        FileUtils.writeStringToFile(srcFile3, CONTENT, StandardCharsets.UTF_8)
+
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("smb2://localhost:4445/share/a/?username=user&password=pass&recursive=true")
+                        .to("file://from-smb")
+                        .stop()
+            }
+        })
+        camelContext.start()
+
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        new File("from-smb\\b\\testab.txt").exists()
+        new File("from-smb\\b\\c1\\testabc1.txt").exists()
+        new File("from-smb\\b\\c2\\testabc2.txt").exists()
     }
 }
