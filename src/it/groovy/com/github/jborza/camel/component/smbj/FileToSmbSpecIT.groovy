@@ -243,7 +243,7 @@ class FileToSmbSpecIT extends Specification {
         content == NEW_CONTENT
         //also assert that the temporary file no longer exists
         File tempTarget = new File(Paths.get(getSambaRootDir(), "output", "smbj." + TEST_FILENAME).toString())
-        tempTarget.exists()
+        !tempTarget.exists()
     }
 
     def "one file from file to subdirectory in smb with fileExist=Override&eagerDelete=true does overwrite"() {
