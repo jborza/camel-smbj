@@ -16,6 +16,9 @@
 
 package com.github.jborza.camel.component.smbj
 
+import com.github.jborza.camel.component.smbj.exceptions.FileAlreadyExistsException
+import org.apache.camel.Exchange
+import org.apache.camel.Processor
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.main.Main
 import org.apache.commons.io.FileUtils
@@ -61,7 +64,30 @@ class FileToSmbSpecIT extends Specification {
         FileUtils.writeStringToFile(target, NEW_CONTENT, StandardCharsets.UTF_8)
     }
 
-    def "one file from file to smb"() {
+    def "one file from file to smb root"() {
+        when:
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("file://to-smb")
+                        .to("smb2://localhost:4445/share/?username=user&password=pass")
+                        .stop()
+            }
+        })
+        camelContext.start()
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        File target = new File(Paths.get(getSambaRootDir(), TEST_FILENAME).toString())
+        target.exists() == true
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        content == NEW_CONTENT
+    }
+
+    def "one file from file to smb subdirectory"() {
         when:
         def main = new Main()
         def camelContext = main.getOrCreateCamelContext()
@@ -150,4 +176,149 @@ class FileToSmbSpecIT extends Specification {
         content == NEW_CONTENT
     }
 
+    def "file from file to smb with fileExist=Override&eagerDelete=false does overwrite"() {
+        when:
+        //prepare the file so it already exists
+        File directory = new File(getSambaRootDir() + "/output")
+        directory.mkdir()
+        File existingFile = new File(getSambaRootDir() + "/output/" + TEST_FILENAME)
+        def originalContent = "original content"
+        FileUtils.writeStringToFile(existingFile, originalContent, StandardCharsets.UTF_8)
+
+        //set up camel context
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("file://to-smb?fileName=" + TEST_FILENAME)
+                        .to("smb2://localhost:4445/share/output/?username=user&password=pass&fileExist=Override&eagerDeleteTargetFile=false&tempPrefix=smbj.")
+                        .stop()
+            }
+        })
+        camelContext.start()
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
+        target.exists() == true
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        content != originalContent
+        content == NEW_CONTENT
+    }
+
+    def "file from file to smb with fileExist=Override&eagerDelete=false and existing temp target does overwrite"() {
+        when:
+        //prepare the file so it already exists
+        File directory = new File(getSambaRootDir() + "/output")
+        directory.mkdir()
+        File existingFile = new File(getSambaRootDir() + "/output/" + TEST_FILENAME)
+        def originalContent = "original content"
+        FileUtils.writeStringToFile(existingFile, originalContent, StandardCharsets.UTF_8)
+        //prepare the temp target as well
+        File existingTempTargetFile = new File(getSambaRootDir() + "/output/smbj." + TEST_FILENAME)
+        FileUtils.touch(existingTempTargetFile)
+
+        //set up camel context
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("file://to-smb?fileName=" + TEST_FILENAME)
+                        .to("smb2://localhost:4445/share/output/?username=user&password=pass&fileExist=Override&eagerDeleteTargetFile=false&tempPrefix=smbj.")
+                        .stop()
+            }
+        })
+        camelContext.start()
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
+        target.exists() == true
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        content != originalContent
+        content == NEW_CONTENT
+        //also assert that the temporary file no longer exists
+        File tempTarget = new File(Paths.get(getSambaRootDir(), "output", "smbj." + TEST_FILENAME).toString())
+        tempTarget.exists() == false
+    }
+
+    def "one file from file to subdirectory in smb with fileExist=Override&eagerDelete=true does overwrite"() {
+        when:
+        //prepare the file so it already exists
+        File directory = new File(getSambaRootDir() + "/output")
+        directory.mkdir()
+        File existingFile = new File(getSambaRootDir() + "/output/" + TEST_FILENAME)
+        def originalContent = "original content"
+        FileUtils.writeStringToFile(existingFile, originalContent, StandardCharsets.UTF_8)
+
+        //set up camel context
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("file://to-smb?fileName=" + TEST_FILENAME)
+                        .to("smb2://localhost:4445/share/output/?username=user&password=pass&fileExist=Override&eagerDeleteTargetFile=true")
+                        .stop()
+            }
+        })
+        camelContext.start()
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
+        target.exists() == true
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        content != originalContent
+        content == NEW_CONTENT
+    }
+
+    def "one file from file to subdirectory in smb with fileExist=Fail should fail"() {
+        when:
+        //prepare the file so it already exists
+        File directory = new File(getSambaRootDir() + "/output")
+        directory.mkdir()
+        File existingFile = new File(getSambaRootDir() + "/output/" + TEST_FILENAME)
+        def originalContent = "original content"
+        FileUtils.writeStringToFile(existingFile, originalContent, StandardCharsets.UTF_8)
+
+        //set up camel context
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        def thrownFileAlreadyExistsException = false
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                onException(FileAlreadyExistsException.class)
+                        .process(new Processor() {
+                    @Override
+                    void process(Exchange exchange) throws Exception {
+                        thrownFileAlreadyExistsException = true
+                        camelContext.stop();
+                    }
+                })
+                from("file://to-smb?fileName=" + TEST_FILENAME)
+                        .to("smb2://localhost:4445/share/output/?username=user&password=pass&fileExist=Fail")
+                        .stop()
+            }
+        })
+        camelContext.start()
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        thrownFileAlreadyExistsException == true
+        //original file not overwritten
+        File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
+        target.exists() == true
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        // definitely not NEW_CONTENT
+        content != NEW_CONTENT
+        content == originalContent
+    }
 }
