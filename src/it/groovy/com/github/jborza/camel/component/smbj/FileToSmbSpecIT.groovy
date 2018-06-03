@@ -312,7 +312,7 @@ class FileToSmbSpecIT extends Specification {
         camelContext.stop()
 
         then:
-        thrownFileAlreadyExistsException == true
+        thrownFileAlreadyExistsException
         //original file not overwritten
         File target = new File(Paths.get(getSambaRootDir(), "output", TEST_FILENAME).toString())
         target.exists()
