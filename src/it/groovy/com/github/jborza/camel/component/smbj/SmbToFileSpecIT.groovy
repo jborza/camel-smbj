@@ -148,6 +148,35 @@ class SmbToFileSpecIT extends Specification {
         }
     }
 
+    def "one file with filter from smb directory to file"() {
+        given:
+        setupDirectoryWithFile()
+        File anotherFile = new File(Paths.get(getTempDir(), "dir", "dont_match_me.ext").toString())
+        FileUtils.touch(anotherFile)
+        when:
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("smb2://localhost:4445/share/dir/?username=user&password=pass&fileName=test.txt")
+                        .to("file://from-smb")
+                        .stop()
+            }
+        })
+        camelContext.start()
+
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        File target = new File(Paths.get("from-smb", "test.txt").toString())
+        target.exists()
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        content == CONTENT
+        !new File(Paths.get("from-smb", "dont_match_me.ext").toString()).exists()
+    }
+
     def "recursive smb folder with flatten"() {
         when:
         //prepare subfolders
