@@ -13,7 +13,7 @@ before_install:
 
 install: mvn install -DskipTests=true -Dgpg.skip=true
 
-script: mvn verify cobertura:cobertura -Dlog4j.configuration=travis-log4j.properties
+script: mvn verify cobertura:cobertura -Dlog4j.configuration=file:$TRAVIS_BUILD_DIR/travis-log4j.properties
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
