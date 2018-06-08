@@ -148,6 +148,42 @@ class SmbToFileSpecIT extends Specification {
         }
     }
 
+    def "recursive smb folder with flatten"() {
+        when:
+        //prepare subfolders
+        File subDir1 = new File(Paths.get(getTempDir(), "a", "b", "c1").toString())
+        subDir1.mkdirs()
+        File subDir2 = new File(Paths.get(getTempDir(), "a", "b", "c2").toString())
+        subDir2.mkdirs()
+
+        File srcFile1 = new File(Paths.get(getTempDir(), "a", "b", "c1", "testabc1.txt").toString())
+        FileUtils.writeStringToFile(srcFile1, CONTENT, StandardCharsets.UTF_8)
+        File srcFile2 = new File(Paths.get(getTempDir(), "a", "b", "c2", "testabc2.txt").toString())
+        FileUtils.writeStringToFile(srcFile2, CONTENT, StandardCharsets.UTF_8)
+        File srcFile3 = new File(Paths.get(getTempDir(), "a", "b", "testab.txt").toString())
+        FileUtils.writeStringToFile(srcFile3, CONTENT, StandardCharsets.UTF_8)
+
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("smb2://localhost:4445/share/a/?username=user&password=pass&recursive=true&flatten=true")
+                        .to("file://from-smb")
+                        .stop()
+            }
+        })
+        camelContext.start()
+
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        new File(Paths.get("from-smb", "testab.txt").toString()).exists()
+        new File(Paths.get("from-smb", "testabc1.txt").toString()).exists()
+        new File(Paths.get("from-smb", "testabc2.txt").toString()).exists()
+    }
+
     def "recursive smb folder to file"() {
         when:
         //prepare subfolders
@@ -179,8 +215,9 @@ class SmbToFileSpecIT extends Specification {
         camelContext.stop()
 
         then:
-        new File("from-smb\\b\\testab.txt").exists()
-        new File("from-smb\\b\\c1\\testabc1.txt").exists()
-        new File("from-smb\\b\\c2\\testabc2.txt").exists()
+        new File(Paths.get("from-smb", "b", "testab.txt").toString()).exists()
+        new File(Paths.get("from-smb", "b", "c1", "testabc1.txt").toString()).exists()
+        new File(Paths.get("from-smb", "b", "c2", "testabc2.txt").toString()).exists()
     }
+
 }
