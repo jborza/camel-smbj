@@ -55,13 +55,7 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
             log.info("Endpoint is configured with noop=true so forcing endpoint to be idempotent as well");
             setIdempotent(true);
         }
-//
-//        // if idempotent and no repository set then create a default one
-//        if (isIdempotentSet() && isIdempotent() && idempotentRepository == null) {
-//            log.info("Using default memory based idempotent repository with cache max size: " + DEFAULT_IDEMPOTENT_CACHE_SIZE);
-//            idempotentRepository = MemoryIdempotentRepository.memoryIdempotentRepository(DEFAULT_IDEMPOTENT_CACHE_SIZE);
-//        }
-//
+
         consumer.setMaxMessagesPerPoll(getMaxMessagesPerPoll());
         consumer.setEagerLimitMaxMessagesPerPoll(isEagerMaxMessagesPerPoll());
         configureConsumer(consumer);
