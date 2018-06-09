@@ -65,6 +65,21 @@ class SmbToFileSpecIT extends Specification {
         FileUtils.writeStringToFile(srcFile, CONTENT, StandardCharsets.UTF_8)
     }
 
+    def setupSubDirectories() {
+        //prepare subfolders
+        File subDir1 = new File(Paths.get(getTempDir(), "a", "b", "c1").toString())
+        subDir1.mkdirs()
+        File subDir2 = new File(Paths.get(getTempDir(), "a", "b", "c2").toString())
+        subDir2.mkdirs()
+
+        File srcFile1 = new File(Paths.get(getTempDir(), "a", "b", "c1", "testabc1.txt").toString())
+        FileUtils.writeStringToFile(srcFile1, CONTENT, StandardCharsets.UTF_8)
+        File srcFile2 = new File(Paths.get(getTempDir(), "a", "b", "c2", "testabc2.txt").toString())
+        FileUtils.writeStringToFile(srcFile2, CONTENT, StandardCharsets.UTF_8)
+        File srcFile3 = new File(Paths.get(getTempDir(), "a", "b", "testab.txt").toString())
+        FileUtils.writeStringToFile(srcFile3, CONTENT, StandardCharsets.UTF_8)
+    }
+
     def "one file from smb directory to file"() {
         when:
         setupDirectoryWithFile()
@@ -178,20 +193,9 @@ class SmbToFileSpecIT extends Specification {
     }
 
     def "recursive smb folder with flatten"() {
+        given:
+        setupSubDirectories()
         when:
-        //prepare subfolders
-        File subDir1 = new File(Paths.get(getTempDir(), "a", "b", "c1").toString())
-        subDir1.mkdirs()
-        File subDir2 = new File(Paths.get(getTempDir(), "a", "b", "c2").toString())
-        subDir2.mkdirs()
-
-        File srcFile1 = new File(Paths.get(getTempDir(), "a", "b", "c1", "testabc1.txt").toString())
-        FileUtils.writeStringToFile(srcFile1, CONTENT, StandardCharsets.UTF_8)
-        File srcFile2 = new File(Paths.get(getTempDir(), "a", "b", "c2", "testabc2.txt").toString())
-        FileUtils.writeStringToFile(srcFile2, CONTENT, StandardCharsets.UTF_8)
-        File srcFile3 = new File(Paths.get(getTempDir(), "a", "b", "testab.txt").toString())
-        FileUtils.writeStringToFile(srcFile3, CONTENT, StandardCharsets.UTF_8)
-
         def main = new Main()
         def camelContext = main.getOrCreateCamelContext()
         camelContext.addRoutes(new RouteBuilder() {
@@ -214,20 +218,9 @@ class SmbToFileSpecIT extends Specification {
     }
 
     def "recursive smb folder to file"() {
+        given:
+        setupSubDirectories()
         when:
-        //prepare subfolders
-        File subDir1 = new File(Paths.get(getTempDir(), "a", "b", "c1").toString())
-        subDir1.mkdirs()
-        File subDir2 = new File(Paths.get(getTempDir(), "a", "b", "c2").toString())
-        subDir2.mkdirs()
-
-        File srcFile1 = new File(Paths.get(getTempDir(), "a", "b", "c1", "testabc1.txt").toString())
-        FileUtils.writeStringToFile(srcFile1, CONTENT, StandardCharsets.UTF_8)
-        File srcFile2 = new File(Paths.get(getTempDir(), "a", "b", "c2", "testabc2.txt").toString())
-        FileUtils.writeStringToFile(srcFile2, CONTENT, StandardCharsets.UTF_8)
-        File srcFile3 = new File(Paths.get(getTempDir(), "a", "b", "testab.txt").toString())
-        FileUtils.writeStringToFile(srcFile3, CONTENT, StandardCharsets.UTF_8)
-
         def main = new Main()
         def camelContext = main.getOrCreateCamelContext()
         camelContext.addRoutes(new RouteBuilder() {
@@ -249,4 +242,53 @@ class SmbToFileSpecIT extends Specification {
         new File(Paths.get("from-smb", "b", "c2", "testabc2.txt").toString()).exists()
     }
 
+    def "recursive smb folder to file with minDepth"() {
+        given:
+        setupSubDirectories()
+        when:
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("smb2://localhost:4445/share/a/?username=user&password=pass&recursive=true&minDepth=3")
+                        .to("file://from-smb")
+                        .stop()
+            }
+        })
+        camelContext.start()
+
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        !new File(Paths.get("from-smb", "b", "testab.txt").toString()).exists()
+        new File(Paths.get("from-smb", "b", "c1", "testabc1.txt").toString()).exists()
+        new File(Paths.get("from-smb", "b", "c2", "testabc2.txt").toString()).exists()
+    }
+
+    def "recursive smb folder to file with maxDepth"() {
+        given:
+        setupSubDirectories()
+        when:
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("smb2://localhost:4445/share/a/?username=user&password=pass&recursive=true&maxDepth=2")
+                        .to("file://from-smb")
+                        .stop()
+            }
+        })
+        camelContext.start()
+
+        Thread.sleep(10000)
+        camelContext.stop()
+
+        then:
+        new File(Paths.get("from-smb", "b", "testab.txt").toString()).exists()
+        !new File(Paths.get("from-smb", "b", "c1", "testabc1.txt").toString()).exists()
+        !new File(Paths.get("from-smb", "b", "c2", "testabc2.txt").toString()).exists()
+    }
 }
