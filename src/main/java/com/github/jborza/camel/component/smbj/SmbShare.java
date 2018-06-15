@@ -55,13 +55,14 @@ public class SmbShare implements AutoCloseable {
     private Session session;
     private String path;
     private DiskShare share;
-    private Connection connection;
+    private ConnectionCache connectionCache;
 
     public SmbShare(SMBClient client, SmbConfiguration config, boolean dfs, int bufferSize) {
         this.client = client;
         this.config = config;
         this.dfs = dfs;
         this.bufferSize = bufferSize;
+        connectionCache = new ConnectionCache(client);
     }
 
     private void connect(String targetPath) {
@@ -83,12 +84,17 @@ public class SmbShare implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
-        if (share != null)
+        if (share != null) {
             share.close();
-        if (session != null)
+        }
+        if (session != null) {
             session.close();
-        if (connection != null && connection.isConnected())
-            connection.close();
+        }
+        for (Connection connection : connectionCache.getConnections()) {
+            if (connection != null && connection.isConnected()) {
+                connection.close(true);
+            }
+        }
     }
 
     /**
@@ -118,9 +124,8 @@ public class SmbShare implements AutoCloseable {
 
     private Session connectSession(String host, int port) {
         try {
-            connection = client.connect(host, port);
-
-            return connection.authenticate(getAuthenticationContext());
+            Connection cachedConnection = connectionCache.getConnection(host, port);
+            return cachedConnection.authenticate(getAuthenticationContext());
         } catch (IOException e) {
             throw new SmbConnectionException(e);
         }
