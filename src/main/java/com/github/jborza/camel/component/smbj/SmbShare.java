@@ -55,6 +55,7 @@ public class SmbShare implements AutoCloseable {
     private Session session;
     private String path;
     private DiskShare share;
+    private Connection connection;
 
     public SmbShare(SMBClient client, SmbConfiguration config, boolean dfs, int bufferSize) {
         this.client = client;
@@ -86,6 +87,8 @@ public class SmbShare implements AutoCloseable {
             share.close();
         if (session != null)
             session.close();
+        if (connection != null && connection.isConnected())
+            connection.close();
     }
 
     /**
@@ -115,7 +118,8 @@ public class SmbShare implements AutoCloseable {
 
     private Session connectSession(String host, int port) {
         try {
-            Connection connection = client.connect(host, port);
+            connection = client.connect(host, port);
+
             return connection.authenticate(getAuthenticationContext());
         } catch (IOException e) {
             throw new SmbConnectionException(e);
@@ -158,9 +162,9 @@ public class SmbShare implements AutoCloseable {
     }
 
     private DiskShare getDfsShare(Session session, SmbPath resolvedPath) {
-        if (isOnSameHost(session, resolvedPath))
+        if (isOnSameHost(session, resolvedPath)) {
             return (DiskShare) session.connectShare(resolvedPath.getShareName());
-        else {
+        } else {
             Session newSession = connectSession(resolvedPath.getHostname());
             return (DiskShare) newSession.connectShare(resolvedPath.getShareName());
         }
