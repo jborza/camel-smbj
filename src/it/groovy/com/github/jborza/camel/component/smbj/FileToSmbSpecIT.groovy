@@ -22,12 +22,11 @@ import org.apache.camel.Processor
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.main.Main
 import org.apache.commons.io.FileUtils
-import spock.lang.Specification
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 
-class FileToSmbSpecIT extends Specification {
+class FileToSmbSpecIT extends SmbSpecBase {
     static final HOST = "localhost"
     static final PORT = "4445"
     static final USER = "user"
@@ -81,7 +80,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
 
         then:
@@ -104,7 +103,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
 
         then:
@@ -128,7 +127,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
 
         then:
@@ -158,7 +157,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
 
         then:
@@ -196,7 +195,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
 
         then:
@@ -230,7 +229,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
 
         then:
@@ -262,7 +261,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
 
         then:
@@ -297,7 +296,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
 
         then:
@@ -332,7 +331,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
 
         then:
@@ -356,7 +355,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
         then:
         //directory not created
@@ -388,7 +387,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
         then:
         File directory = new File(Paths.get(getSambaRootDir(), OUTPUT_DIR).toString())
@@ -426,7 +425,7 @@ class FileToSmbSpecIT extends Specification {
             }
         })
         camelContext.start()
-        Thread.sleep(10000)
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
         camelContext.stop()
 
         then:
