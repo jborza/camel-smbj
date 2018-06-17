@@ -18,6 +18,7 @@ package com.github.jborza.camel.component.smbj;
 
 import com.github.jborza.camel.component.smbj.exceptions.FileAlreadyExistsException;
 import com.hierynomus.smbj.SMBClient;
+import com.hierynomus.smbj.SmbConfig;
 import org.apache.camel.Exchange;
 import org.apache.camel.component.file.*;
 import org.apache.camel.util.FileUtil;
@@ -30,15 +31,15 @@ import java.io.*;
 import java.util.List;
 
 public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFactory {
-    private final SMBClient client;
 
+    private final SmbConfig smbConfig;
     private SmbClient smbClient;
     private GenericFileEndpoint<SmbFile> endpoint;
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public SmbOperations(SMBClient client) {
-        this.client = client;
+    public SmbOperations(SmbConfig config) {
+        this.smbConfig = config;
         this.smbClient = new SmbClient(this);
     }
 
@@ -274,6 +275,6 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
 
     @Override
     public SmbShare makeSmbShare() {
-        return new SmbShare(client, getConfiguration(), isDfs(), endpoint.getBufferSize());
+        return new SmbShare(new SMBClient(smbConfig), getConfiguration(), isDfs(), endpoint.getBufferSize());
     }
 }

@@ -16,7 +16,6 @@
 
 package com.github.jborza.camel.component.smbj;
 
-import com.hierynomus.smbj.SMBClient;
 import com.hierynomus.smbj.SmbConfig;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
@@ -86,9 +85,7 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
 
     public SmbOperations createSmbOperations() {
         SmbConfig config = createSmbConfig();
-
-        SMBClient client = new SMBClient(config);
-        SmbOperations operations = new SmbOperations(client);
+        SmbOperations operations = new SmbOperations(config);
         operations.setEndpoint(this);
         return operations;
     }

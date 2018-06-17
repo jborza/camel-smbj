@@ -16,7 +16,6 @@
 
 package com.github.jborza.camel.component.smbj
 
-import com.hierynomus.smbj.SMBClient
 import com.hierynomus.smbj.SmbConfig
 import org.apache.camel.component.file.FileComponent
 import org.apache.camel.component.file.GenericFile
@@ -36,8 +35,7 @@ class SmbOperationsSpec extends Specification {
 
     def setup() {
         def config = SmbConfig.builder().build()
-        def client = new SMBClient(config)
-        ops = new SmbOperations(client)
+        ops = new SmbOperations(config)
         mockSmbClient = Mock(SmbClient)
         def endpoint = Mock(SmbEndpoint)
         endpoint.getConfiguration() >> new SmbConfiguration(new URI("smb2://host/dir"))
