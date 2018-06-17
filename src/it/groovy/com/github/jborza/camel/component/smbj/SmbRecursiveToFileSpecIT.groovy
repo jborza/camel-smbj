@@ -26,6 +26,16 @@ import java.nio.file.Paths
 class SmbRecursiveToFileSpecIT extends SmbSpecBase {
     final CONTENT = "Hello, SmbToFile content!"
 
+    def setup() {
+        //clear samba target directory
+        File directory = new File(getTempDir())
+        FileUtils.cleanDirectory(directory)
+        //clear up destination
+        File targetDirectory = new File("from-smb")
+        FileUtils.forceMkdir(targetDirectory)
+        FileUtils.cleanDirectory(targetDirectory)
+    }
+
     def setupSubDirectories() {
         //prepare subfolders
         File subDir1 = new File(Paths.get(getTempDir(), "a", "b", "c1").toString())
