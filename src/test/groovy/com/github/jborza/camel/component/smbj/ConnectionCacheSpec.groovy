@@ -18,7 +18,6 @@ package com.github.jborza.camel.component.smbj
 
 import com.hierynomus.smbj.SMBClient
 import com.hierynomus.smbj.connection.Connection
-import spock.lang.Ignore
 import spock.lang.Specification
 
 class ConnectionCacheSpec extends Specification {
@@ -46,20 +45,21 @@ class ConnectionCacheSpec extends Specification {
         1 * mockClient.connect(HOST, PORT)
     }
 
-    @Ignore("Needs investigation why does the mock claim it was invoked only once")
     def "getConnection reconnects if a cached connection is closed"() {
         given:
         def mockClient = Mock(SMBClient)
         //a mock of connection that is closed
-        def mockConn = Mock(Connection)
-        mockConn.isConnected() >> false
+        def mockConn = Mock(Connection) {
+            isConnected() >> false
+        }
         def cache = new ConnectionCache(mockClient)
-        mockClient.connect(_, _) >> mockConn
+        // we return the interaction here as we combine mock and stub
+        2 * mockClient.connect(_, _) >> mockConn
         def conn1 = cache.getConnection(HOST, PORT)
         when:
         def conn2 = cache.getConnection(HOST, PORT)
         then:
-        2 * mockClient.connect(_, _)
+        conn2 == conn1
     }
 
     def "getConnections returns connections"() {
