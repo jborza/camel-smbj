@@ -91,7 +91,8 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
     }
 
     @Override
-    public boolean retrieveFile(String name, Exchange exchange) throws GenericFileOperationFailedException {
+    @SuppressWarnings("unused")
+    public boolean retrieveFile(String name, Exchange exchange, long size) throws GenericFileOperationFailedException {
         if (ObjectHelper.isNotEmpty(endpoint.getLocalWorkDirectory())) {
             // local work directory is configured so we should store file content as files in this local directory
             return retrieveFileToFileInLocalWorkDirectory(name, exchange);
@@ -99,6 +100,11 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
             // store file content directory as stream on the body
             return retrieveFileToStreamInBody(name, exchange);
         }
+    }
+
+    @Override
+    public void releaseRetrievedFileResources(Exchange exchange) throws GenericFileOperationFailedException {
+        //intentionally left blank
     }
 
     @SuppressWarnings("unchecked")
@@ -191,11 +197,6 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
     }
 
     @Override
-    public void releaseRetreivedFileResources(Exchange exchange) throws GenericFileOperationFailedException {
-        //intentionally left blank
-    }
-
-    @Override
     public String getCurrentDirectory() throws GenericFileOperationFailedException {
         throw new UnsupportedOperationException();
     }
@@ -235,7 +236,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
     }
 
     @Override
-    public boolean storeFile(String name, Exchange exchange) {
+    public boolean storeFile(String name, Exchange exchange, long size) {
         if (shouldCheckForFileExists() && existsFile(name)) {
             if (endpoint.getFileExist() == GenericFileExist.Override && endpoint.isEagerDeleteTargetFile()) {
                 log.debug("Eagerly deleting existing file: {}", name);

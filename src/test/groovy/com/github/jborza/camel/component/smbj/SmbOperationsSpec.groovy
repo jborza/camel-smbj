@@ -73,7 +73,7 @@ class SmbOperationsSpec extends Specification {
         message.setBody(stream)
         exchange.setIn(message)
         when:
-        ops.storeFile("path/to/file", exchange)
+        ops.storeFile("path/to/file", exchange, 0)
         then:
         1 * mockSmbClient.storeFile("path/to/file", !null)
     }
@@ -85,7 +85,7 @@ class SmbOperationsSpec extends Specification {
         def gf = new GenericFile<SmbFile>()
         exchange.setProperty(FileComponent.FILE_EXCHANGE_FILE, gf)
         when:
-        ops.retrieveFile("path/to/file", exchange)
+        ops.retrieveFile("path/to/file", exchange, 0)
         then:
         1 * mockSmbClient.retrieveFile("path/to/file", !null)
     }
@@ -188,7 +188,7 @@ class SmbOperationsSpec extends Specification {
         exchange.setProperty(FileComponent.FILE_EXCHANGE_FILE, gf)
         mockSmbClient.retrieveFile(_, _) >> { throw new IOException() }
         when:
-        ops.retrieveFile("path/to/file", exchange)
+        ops.retrieveFile("path/to/file", exchange, 0)
         then:
         thrown GenericFileOperationFailedException
     }
@@ -203,7 +203,7 @@ class SmbOperationsSpec extends Specification {
         exchange.setIn(message)
         mockSmbClient.storeFile(_, _) >> { throw new IOException() }
         when:
-        ops.storeFile("path/to/file", exchange)
+        ops.storeFile("path/to/file", exchange, 0)
         then:
         thrown GenericFileOperationFailedException
     }
