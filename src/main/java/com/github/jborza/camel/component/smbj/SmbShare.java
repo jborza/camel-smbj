@@ -90,9 +90,7 @@ public class SmbShare implements AutoCloseable {
         if (share != null) {
             share.close();
         }
-        if (session != null) {
-            session.close();
-        }
+        //connection.close should close the active sessions
         for (Connection connection : connectionCache.getConnections()) {
             if (connection != null && connection.isConnected()) {
                 connection.close(true);
