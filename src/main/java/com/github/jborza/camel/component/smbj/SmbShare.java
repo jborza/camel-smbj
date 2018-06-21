@@ -68,7 +68,10 @@ public class SmbShare implements AutoCloseable {
     private void connect(String targetPath) {
         session = connectSession();
         DfsResolutionResult pathResolutionResult = resolvePlainPath(targetPath);
-        path = removeLeadingBackslash(pathResolutionResult.getSmbPath().getPath());
+        String resolvedPath = pathResolutionResult.getSmbPath().getPath();
+        if (resolvedPath == null)
+            resolvedPath = "";
+        path = removeLeadingBackslash(resolvedPath);
         share = pathResolutionResult.getDiskShare();
     }
 

@@ -96,6 +96,33 @@ class SmbToFileSpecIT extends SmbSpecBase {
         content == CONTENT
     }
 
+    def "one file from smb root with dfs=true to file"() {
+        given:
+        File srcFile = new File(Paths.get(getTempDir(), "test.txt").toString())
+        FileUtils.writeStringToFile(srcFile, CONTENT, StandardCharsets.UTF_8)
+        when:
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("smb2://localhost:4445/share/?username=user&password=pass&dfs=true")
+                        .to("file://from-smb")
+                        .stop()
+            }
+        })
+        camelContext.start()
+
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
+        camelContext.stop()
+
+        then:
+        File target = new File(Paths.get("from-smb", "test.txt").toString())
+        target.exists()
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        content == CONTENT
+    }
+
     def "more files from smb directory to file"() {
         given:
         for (def i = 0; i < 10; i++) {
