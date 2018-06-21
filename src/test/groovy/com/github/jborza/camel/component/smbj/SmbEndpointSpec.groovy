@@ -105,4 +105,19 @@ class SmbEndpointSpec extends Specification {
         then:
         thrown(IllegalArgumentException)
     }
+
+    def "when idempotent=true an idempotent repository should be set up"() {
+        given:
+        def uri = "smb2://server/share?idempotent=true"
+        def component = Mock(SmbComponent)
+        def config = new SmbConfiguration(new URI(uri))
+        def endpoint = new SmbEndpoint(uri, component, config)
+        //Camel usually sets this from URL
+        endpoint.setIdempotent(Boolean.TRUE)
+        def consumer = endpoint.createConsumer(null)
+        when:
+        def repo = endpoint.getIdempotentRepository()
+        then:
+        repo != null
+    }
 }

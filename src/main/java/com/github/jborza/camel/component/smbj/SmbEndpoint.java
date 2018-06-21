@@ -56,7 +56,7 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
             setIdempotent(true);
         }
 
-        // if idempotent andno repository set then create a new one
+        // if idempotent and no repository set then create a new one
         if (isIdempotentSet() && isIdempotent() && idempotentRepository == null) {
             log.info("Using default memory based idempotent repository with cache max size: " + DEFAULT_IDEMPOTENT_CACHE_SIZE);
             setIdempotentRepository(MemoryIdempotentRepository.memoryIdempotentRepository(DEFAULT_IDEMPOTENT_CACHE_SIZE));
