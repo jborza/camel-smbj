@@ -23,6 +23,7 @@ import org.apache.camel.component.file.GenericFile;
 import org.apache.camel.component.file.GenericFileEndpoint;
 import org.apache.camel.component.file.GenericFileProducer;
 import org.apache.camel.impl.DefaultExchange;
+import org.apache.camel.processor.idempotent.MemoryIdempotentRepository;
 import org.apache.camel.spi.UriEndpoint;
 import org.apache.camel.spi.UriParam;
 
@@ -53,6 +54,12 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
         if (isNoop() && !isIdempotentSet()) {
             log.info("Endpoint is configured with noop=true so forcing endpoint to be idempotent as well");
             setIdempotent(true);
+        }
+
+        // if idempotent andno repository set then create a new one
+        if (isIdempotentSet() && isIdempotent() && idempotentRepository == null) {
+            log.info("Using default memory based idempotent repository with cache max size: " + DEFAULT_IDEMPOTENT_CACHE_SIZE);
+            setIdempotentRepository(MemoryIdempotentRepository.memoryIdempotentRepository(DEFAULT_IDEMPOTENT_CACHE_SIZE));
         }
 
         consumer.setMaxMessagesPerPoll(getMaxMessagesPerPoll());

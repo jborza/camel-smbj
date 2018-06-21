@@ -209,4 +209,32 @@ class SmbToFileSpecIT extends SmbSpecBase {
         String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
         content == CONTENT
     }
+
+    def "one file from smb root to file with idempotent=true"() {
+        given:
+        File srcFile = new File(Paths.get(getTempDir(), "test.txt").toString())
+        FileUtils.writeStringToFile(srcFile, CONTENT, StandardCharsets.UTF_8)
+        when:
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("smb2://localhost:4445/share/?username=user&password=pass&noop=true&idempotent=true")
+                        .to("file://from-smb")
+                        .stop()
+            }
+        })
+        camelContext.start()
+
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
+        camelContext.stop()
+
+        then:
+        File target = new File(Paths.get("from-smb", "test.txt").toString())
+        target.exists()
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        content == CONTENT
+    }
+
 }
