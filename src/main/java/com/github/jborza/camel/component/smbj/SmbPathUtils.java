@@ -33,7 +33,7 @@ public final class SmbPathUtils {
     private static String removeShareName(String path, String shareName, String separator) {
         if (path.equals(shareName))
             return "";
-        String sharePathElementPattern = "^" + shareName + Pattern.quote(separator);
+        String sharePathElementPattern = "^" + Pattern.quote(shareName + separator);
         return path.replaceFirst(sharePathElementPattern, "");
     }
 }

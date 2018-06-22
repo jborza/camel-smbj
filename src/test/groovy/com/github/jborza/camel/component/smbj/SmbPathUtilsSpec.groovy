@@ -33,6 +33,16 @@ class SmbPathUtilsSpec extends Specification {
         "share\\dir\\subdir\\file.ext" | "share" | "dir\\subdir\\file.ext"
     }
 
+    def "should remove share name with windows separator"() {
+        expect:
+        result == SmbPathUtils.removeShareName(path, share, true)
+
+        where:
+        path           | share     | result
+        "share\$"      | "share\$" | ""
+        "share\$\\dir" | "share\$" | "dir"
+    }
+
     def "should not remove share name on mismatch"() {
         expect:
         result == SmbPathUtils.removeShareName(path, share, true)
