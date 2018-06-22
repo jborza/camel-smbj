@@ -237,4 +237,43 @@ class SmbToFileSpecIT extends SmbSpecBase {
         content == CONTENT
     }
 
+    def makeTempFile(path) {
+        return new File(Paths.get(getTempDir(), path).toString())
+    }
+
+    def "from smb to file with include option and regex"() {
+        given:
+        File srcFile = new File(Paths.get(getTempDir(), "test123").toString())
+        FileUtils.writeStringToFile(srcFile, CONTENT, StandardCharsets.UTF_8)
+        FileUtils.touch(makeTempFile("test_sometext"))
+        FileUtils.touch(makeTempFile("testaaa.txt"))
+        FileUtils.touch(makeTempFile("notthisfile.txt"))
+        FileUtils.touch(makeTempFile("notthatfile.txt"))
+        when:
+        def include = "&include=test%5Cd%7B3%7D"
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("smb2://localhost:4445/share/?username=user&password=pass&dfs=true&noop=true" + include)
+                        .to("file://from-smb")
+                        .stop()
+            }
+        })
+        camelContext.start()
+
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
+        camelContext.stop()
+
+        then:
+        File targetDir = new File(Paths.get("from-smb").toString())
+        targetDir.list().size() == 1
+        targetDir.list() == ["test123"]
+        File target = new File(Paths.get("from-smb", "test123").toString())
+        target.exists()
+        String content = FileUtils.readFileToString(target, StandardCharsets.UTF_8)
+        content == CONTENT
+    }
+
 }
