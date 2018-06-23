@@ -303,7 +303,7 @@ class SmbToFileSpecIT extends SmbSpecBase {
         then:
         File targetDir = new File(Paths.get("from-smb").toString())
         targetDir.list().size() == 3
-        targetDir.list() == ["included_file", "test_also_good", "test_good"]
+        targetDir.list().sort() == ["included_file", "test_also_good", "test_good"]
     }
 
 }
