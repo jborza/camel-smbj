@@ -20,6 +20,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.Processor;
 import org.apache.camel.component.file.*;
+import org.apache.camel.util.FileUtil;
 
 import java.util.List;
 
@@ -87,7 +88,16 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
 
     @Override
     protected boolean isMatched(GenericFile<SmbFile> file, String doneFileName, List<SmbFile> files) {
-        return true;
+        String onlyName = FileUtil.stripPath(doneFileName);
+
+        for (SmbFile f : files) {
+            if (f.getFileName().equals(onlyName)) {
+                return true;
+            }
+        }
+
+        log.trace("Done file: {} does not exist", doneFileName);
+        return false;
     }
 
     @Override
