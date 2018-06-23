@@ -284,6 +284,7 @@ class SmbToFileSpecIT extends SmbSpecBase {
         FileUtils.touch(makeTempFile("test_also_good"))
         FileUtils.touch(makeTempFile("included_file"))
         when:
+        //exclude=test\d{3}
         def exclude = "&exclude=test%5Cd%7B3%7D"
         def main = new Main()
         def camelContext = main.getOrCreateCamelContext()

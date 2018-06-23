@@ -33,7 +33,7 @@ class SmbPathUtilsSpec extends Specification {
         "share\\dir\\subdir\\file.ext" | "share" | "dir\\subdir\\file.ext"
     }
 
-    def "should remove share name with windows separator"() {
+    def "should remove share name with special dollar character"() {
         expect:
         result == SmbPathUtils.removeShareName(path, share, true)
 
