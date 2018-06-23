@@ -25,6 +25,7 @@ import java.nio.file.Paths
 
 class SmbToFileSpecIT extends SmbSpecBase {
     final CONTENT = "Hello, SmbToFile content!"
+    def COMMON_OPTIONS = "username=user&password=pass&delay=10000"
 
     def setup() {
         //clear samba target directory
@@ -305,6 +306,28 @@ class SmbToFileSpecIT extends SmbSpecBase {
         File targetDir = new File(Paths.get("from-smb").toString())
         targetDir.list().size() == 3
         targetDir.list().sort() == ["included_file", "test_also_good", "test_good"]
+    }
+
+    def "from smb to file with autoCreate creates the directory"() {
+        given:
+        when:
+        def main = new Main()
+        def camelContext = main.getOrCreateCamelContext()
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            void configure() throws Exception {
+                from("smb2://localhost:4445/share/non_existing_dir?${COMMON_OPTIONS}&autoCreate=true")
+                        .to("file://from-smb")
+                        .stop()
+            }
+        })
+        camelContext.start()
+
+        Thread.sleep(DEFAULT_CAMEL_CONTEXT_DURATION)
+        camelContext.stop()
+        then:
+        File srcDir = new File(Paths.get(getTempDir(), "non_existing_dir").toString())
+        srcDir.exists()
     }
 
 }
