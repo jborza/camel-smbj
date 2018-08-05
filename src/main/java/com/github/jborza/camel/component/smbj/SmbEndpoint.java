@@ -45,7 +45,8 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
 
     @Override
     public SmbConsumer createConsumer(Processor processor) throws Exception {
-        SmbConsumer consumer = new SmbConsumer(this, processor, createSmbOperations());
+        createProcessStrategyIfNotSet();
+        SmbConsumer consumer = new SmbConsumer(this, processor, createSmbOperations(), getProcessStrategy());
         if (isDelete() && getMove() != null) {
             throw new IllegalArgumentException("You cannot set both delete=true and move options");
         }
@@ -66,6 +67,11 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
         consumer.setEagerLimitMaxMessagesPerPoll(isEagerMaxMessagesPerPoll());
         configureConsumer(consumer);
         return consumer;
+    }
+
+    private void createProcessStrategyIfNotSet() {
+        if(getProcessStrategy() == null)
+            setProcessStrategy(createGenericFileStrategy());
     }
 
     @Override

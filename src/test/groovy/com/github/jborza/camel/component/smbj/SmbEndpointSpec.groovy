@@ -16,6 +16,9 @@
 
 package com.github.jborza.camel.component.smbj
 
+import org.apache.camel.component.file.GenericFileProcessStrategy
+import org.apache.camel.component.file.strategy.GenericFileNoOpProcessStrategy
+import org.apache.camel.component.file.strategy.GenericFileProcessStrategyFactory
 import org.apache.camel.main.Main
 import spock.lang.Specification
 
@@ -79,6 +82,7 @@ class SmbEndpointSpec extends Specification {
         def component = Mock(SmbComponent)
         def config = new SmbConfiguration(new URI(uri))
         def endpoint = new SmbEndpoint(uri, component, config)
+        endpoint.setProcessStrategy(new GenericFileNoOpProcessStrategy<SmbFile>())
         when:
         def consumer = endpoint.createConsumer(null)
         then:
@@ -112,6 +116,7 @@ class SmbEndpointSpec extends Specification {
         def component = Mock(SmbComponent)
         def config = new SmbConfiguration(new URI(uri))
         def endpoint = new SmbEndpoint(uri, component, config)
+        endpoint.setProcessStrategy(new GenericFileNoOpProcessStrategy<SmbFile>())
         //Camel usually sets this from URL
         endpoint.setIdempotent(Boolean.TRUE)
         def consumer = endpoint.createConsumer(null)

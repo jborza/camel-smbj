@@ -30,8 +30,8 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
     private final String currentRelativePath = "";
     private GenericFileConverter genericFileConverter;
 
-    public SmbConsumer(GenericFileEndpoint<SmbFile> endpoint, Processor processor, GenericFileOperations<SmbFile> operations) {
-        super(endpoint, processor, operations);
+    public SmbConsumer(GenericFileEndpoint<SmbFile> endpoint, Processor processor, GenericFileOperations<SmbFile> operations, GenericFileProcessStrategy<SmbFile> processStrategy) {
+        super(endpoint, processor, operations, processStrategy);
         SmbConfiguration config = (SmbConfiguration) endpoint.getConfiguration();
         this.endpointPath = config.getShare() + "\\" + config.getPath();
         genericFileConverter = new GenericFileConverter();
@@ -110,7 +110,6 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
             if (endpoint.isAutoCreate()) {
                 log.debug("Auto creating directory: {}", endpoint.getConfiguration().getDirectory());
                 try {
-//                    connectIfNecessary();
                     operations.buildDirectory(endpoint.getConfiguration().getDirectory(), true);
                 } catch (GenericFileOperationFailedException e) {
                     // log a WARN as we want to start the consumer.
