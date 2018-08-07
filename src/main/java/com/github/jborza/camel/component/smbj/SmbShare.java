@@ -180,6 +180,10 @@ public class SmbShare implements AutoCloseable {
         return session.getConnection().getRemoteHostname().equals(path.getHostname());
     }
 
+    private long getFileSize() {
+        return getShare().getFileInformation(getPath()).getStandardInformation().getEndOfFile();
+    }
+
     public void rename(String from, String to) {
         session = connectSession();
         DfsResolutionResult resolvedFrom = resolvePlainPath(from);
@@ -200,6 +204,22 @@ public class SmbShare implements AutoCloseable {
              OutputStream outputStream = file.getOutputStream()
         ) {
             IOUtils.copy(inputStream, outputStream, bufferSize);
+        }
+    }
+
+    public void appendFile(String path, InputStream inputStream) throws IOException {
+        connect(path);
+        try (File file = openForAppend(getShare(), getPath())) {
+            long fileOffset = getFileSize();
+            int length;
+
+            final byte[] buffer = new byte[4096];
+            final int EOF = -1;
+
+            while (EOF != (length = inputStream.read(buffer))) {
+                file.write(buffer, fileOffset, 0, length);
+                fileOffset += length;
+            }
         }
     }
 
@@ -253,6 +273,10 @@ public class SmbShare implements AutoCloseable {
 
     private static File openForWrite(DiskShare share, String name) {
         return share.openFile(name, EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_CREATE, EnumSet.of(SMB2CreateOptions.FILE_SEQUENTIAL_ONLY));
+    }
+
+    private static File openForAppend(DiskShare share, String name) {
+        return share.openFile(name, EnumSet.of(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN_IF, EnumSet.of(SMB2CreateOptions.FILE_SEQUENTIAL_ONLY));
     }
 
     private static File openForRead(DiskShare share, String name) {

@@ -46,6 +46,12 @@ public class SmbClient {
         }
     }
 
+    public void appendFile(String name, InputStream inputStream) throws IOException {
+        try (SmbShare share = makeSmbShare()) {
+            share.appendFile(name, inputStream);
+        }
+    }
+
     public void retrieveFile(String name, OutputStream os) throws IOException {
         try (SmbShare share = makeSmbShare()) {
             share.retrieveFile(name, os);

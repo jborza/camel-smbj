@@ -26,6 +26,7 @@ import org.apache.camel.util.IOHelper;
 import org.apache.camel.util.ObjectHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.net.www.content.text.Generic;
 
 import java.io.*;
 import java.util.List;
@@ -232,7 +233,10 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
     }
 
     private boolean shouldCheckForFileExists() {
-        return endpoint.getFileExist() == GenericFileExist.Fail || endpoint.getFileExist() == GenericFileExist.Override || endpoint.getFileExist() == GenericFileExist.Ignore;
+        return endpoint.getFileExist() == GenericFileExist.Fail
+                || endpoint.getFileExist() == GenericFileExist.Override
+                || endpoint.getFileExist() == GenericFileExist.Ignore
+                || endpoint.getFileExist() == GenericFileExist.Append;
     }
 
     @Override
@@ -256,7 +260,10 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
         try {
             inputStream = exchange.getIn().getMandatoryBody(InputStream.class);
             log.debug("Storing file: {}", name);
-            smbClient.storeFile(name, inputStream);
+            if (endpoint.getFileExist() == GenericFileExist.Append)
+                smbClient.appendFile(name, inputStream);
+            else
+                smbClient.storeFile(name, inputStream);
             return true;
         } catch (Exception e) {
             String storeName = getPath(name);
