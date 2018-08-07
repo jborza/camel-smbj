@@ -253,7 +253,9 @@ public class SmbShare implements AutoCloseable {
 
     public void deleteFile(String path) {
         connect(path);
-        getShare().rm(getPath());
+        if(getShare().fileExists(getPath())) {
+            getShare().rm(getPath());
+        }
     }
 
     public boolean mkdirs(String directory) {
