@@ -26,7 +26,6 @@ import org.apache.camel.util.IOHelper;
 import org.apache.camel.util.ObjectHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.net.www.content.text.Generic;
 
 import java.io.*;
 import java.util.List;
