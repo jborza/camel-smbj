@@ -63,7 +63,7 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
                 if (currentDepth < endpoint.getMinDepth())
                     continue;
 
-                boolean isDirectory = false; //we never return directories
+                final boolean isDirectory = false; //we never return directories
                 if (isValidFile(gf, isDirectory, smbFiles))
                     fileList.add(gf);
             }

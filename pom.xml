@@ -24,7 +24,7 @@ limitations under the License.
     <groupId>com.github.jborza</groupId>
     <artifactId>camel-smbj</artifactId>
     <packaging>jar</packaging>
-    <version>0.2.1-SNAPSHOT</version>
+    <version>0.2.2-SNAPSHOT</version>
 
     <name>Camel SMB2 (SMBJ) Component</name>
     <description>A camel component that allows connecting to SMB shares with the SMBJ library.</description>
@@ -40,7 +40,7 @@ limitations under the License.
 
     <properties>
         <cobertura.version>2.7</cobertura.version>
-        <camel.version>2.22.0</camel.version>
+        <camel.version>2.22.1</camel.version>
         <smbj.version>0.7.0</smbj.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <slf4j-api.version>1.7.25</slf4j-api.version>
