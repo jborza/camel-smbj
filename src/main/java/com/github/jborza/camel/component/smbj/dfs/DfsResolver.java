@@ -27,7 +27,7 @@ public class DfsResolver {
     public SmbPath resolve(SMBClient client, Session session, SmbPath path) {
         try {
             SMB2Echo responsePacket = new SMB2Echo();
-            responsePacket.getHeader().setStatus(NtStatus.STATUS_PATH_NOT_COVERED);
+            responsePacket.getHeader().setStatusCode(NtStatus.STATUS_PATH_NOT_COVERED.getValue());
             return client.getPathResolver().resolve(session, responsePacket, path);
         } catch (PathResolveException e) {
             throw new DfsPathResolveException(e);

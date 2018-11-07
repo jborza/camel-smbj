@@ -41,7 +41,7 @@ limitations under the License.
     <properties>
         <cobertura.version>2.7</cobertura.version>
         <camel.version>2.22.1</camel.version>
-        <smbj.version>0.7.0</smbj.version>
+        <smbj.version>0.9.0</smbj.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <slf4j-api.version>1.7.25</slf4j-api.version>
         <cglib.version>3.2.6</cglib.version>
