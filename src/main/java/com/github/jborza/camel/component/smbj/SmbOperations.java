@@ -92,7 +92,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
 
     @Override
     @SuppressWarnings("unused")
-    public boolean retrieveFile(String name, Exchange exchange, long size) throws GenericFileOperationFailedException {
+    public boolean retrieveFile(String name, Exchange exchange) throws GenericFileOperationFailedException {
         if (ObjectHelper.isNotEmpty(endpoint.getLocalWorkDirectory())) {
             // local work directory is configured so we should store file content as files in this local directory
             return retrieveFileToFileInLocalWorkDirectory(name, exchange);
@@ -103,7 +103,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
     }
 
     @Override
-    public void releaseRetrievedFileResources(Exchange exchange) throws GenericFileOperationFailedException {
+    public void releaseRetreivedFileResources(Exchange exchange) throws GenericFileOperationFailedException {
         //intentionally left blank
     }
 
@@ -239,7 +239,7 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
     }
 
     @Override
-    public boolean storeFile(String name, Exchange exchange, long size) {
+    public boolean storeFile(String name, Exchange exchange) {
         if (shouldCheckForFileExists() && existsFile(name)) {
             if (endpoint.getFileExist() == GenericFileExist.Override && endpoint.isEagerDeleteTargetFile()) {
                 log.debug("Eagerly deleting existing file: {}", name);

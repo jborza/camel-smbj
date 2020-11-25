@@ -203,7 +203,7 @@ public class SmbShare implements AutoCloseable {
         try (File file = openForWrite(getShare(), getPath());
              OutputStream outputStream = file.getOutputStream()
         ) {
-            IOUtils.copy(inputStream, outputStream, bufferSize);
+            IOUtils.copy(inputStream, outputStream);
         }
     }
 

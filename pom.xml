@@ -40,10 +40,10 @@ limitations under the License.
 
     <properties>
         <cobertura.version>2.7</cobertura.version>
-        <camel.version>2.22.1</camel.version>
-        <smbj.version>0.9.0</smbj.version>
+        <camel.version>2.19.3</camel.version>
+        <smbj.version>0.10.0</smbj.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <slf4j-api.version>1.7.25</slf4j-api.version>
+        <slf4j-api.version>1.7.22</slf4j-api.version>
         <cglib.version>3.2.6</cglib.version>
         <objenesis.version>2.6</objenesis.version>
         <maven-failsafe-plugin.version>2.21.0</maven-failsafe-plugin.version>
@@ -56,7 +56,7 @@ limitations under the License.
         <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
         <maven-javadoc-plugin.version>2.9.1</maven-javadoc-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.7</nexus-staging-maven-plugin.version>
-        <commons-io.version>2.5</commons-io.version>
+        <commons-io.version>2.4</commons-io.version>
     </properties>
 
     <scm>
