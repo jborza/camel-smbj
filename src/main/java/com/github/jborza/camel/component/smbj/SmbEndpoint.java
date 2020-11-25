@@ -30,6 +30,8 @@ import org.apache.camel.spi.UriParam;
 @UriEndpoint(scheme = "smb2", title = "SMBJ", syntax = "smb2://user@server.example.com/sharename?password=secret&localWorkDirectory=/tmp", consumerClass = SmbConsumer.class)
 public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
 
+    private boolean download = true;
+
     @UriParam
     protected boolean dfs;
 
@@ -46,7 +48,7 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
     @Override
     public SmbConsumer createConsumer(Processor processor) throws Exception {
         createProcessStrategyIfNotSet();
-        SmbConsumer consumer = new SmbConsumer(this, processor, createSmbOperations(), getProcessStrategy());
+        SmbConsumer consumer = new SmbConsumer(this, processor, createSmbOperations());
         if (isDelete() && getMove() != null) {
             throw new IllegalArgumentException("You cannot set both delete=true and move options");
         }
@@ -129,5 +131,13 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
     @Override
     public boolean isSingleton() {
         return false;
+    }
+
+    public boolean isDownload(){
+        return download;
+    }
+
+    public void setDownload(boolean download){
+        this.download = download;
     }
 }

@@ -30,7 +30,7 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
     private final String currentRelativePath = "";
     private GenericFileConverter genericFileConverter;
 
-    public SmbConsumer(GenericFileEndpoint<SmbFile> endpoint, Processor processor, GenericFileOperations<SmbFile> operations, GenericFileProcessStrategy<SmbFile> processStrategy) {
+    public SmbConsumer(GenericFileEndpoint<SmbFile> endpoint, Processor processor, GenericFileOperations<SmbFile> operations) {
         super(endpoint, processor, operations);
         SmbConfiguration config = (SmbConfiguration) endpoint.getConfiguration();
         this.endpointPath = config.getShare() + "\\" + config.getPath();
@@ -123,5 +123,10 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
                 startScheduler();
             }
         }
+    }
+
+    @Override
+    protected boolean isRetrieveFile(){
+        return ((SmbEndpoint)getEndpoint()).isDownload();
     }
 }
