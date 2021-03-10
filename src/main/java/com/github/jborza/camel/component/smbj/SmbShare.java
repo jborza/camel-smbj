@@ -105,6 +105,11 @@ public class SmbShare implements AutoCloseable {
         return share;
     }
 
+    public DiskShare connectAndGetShare(String path){
+        connect(path);
+        return getShare();
+    }
+
     /**
      * @return The DFS resolved path, if DFS is used. Otherwise the supplied path is returned
      */
