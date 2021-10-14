@@ -17,6 +17,9 @@ Where share represents the share to connect to and dir is optionally any underly
 You can append query options to the URI in the following format, ?option=value&option=value&...
 This component uses the [SMBJ library](https://github.com/hierynomus/smbj) for the actual SMB work.
 
+One of the possible options is  "password" option for which you can use RAW() in case your password contains some exotic
+non-encodeable chars. 
+
 
 By itself, the camel-smbj component is an extension of the [File component](http://camel.apache.org/file2.html).
 
