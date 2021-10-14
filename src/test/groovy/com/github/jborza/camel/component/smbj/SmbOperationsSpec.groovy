@@ -21,8 +21,8 @@ import org.apache.camel.component.file.FileComponent
 import org.apache.camel.component.file.GenericFile
 import org.apache.camel.component.file.GenericFileOperationFailedException
 import org.apache.camel.impl.DefaultCamelContext
-import org.apache.camel.impl.DefaultExchange
-import org.apache.camel.impl.DefaultMessage
+import org.apache.camel.support.DefaultExchange
+import org.apache.camel.support.DefaultMessage
 import org.apache.commons.io.IOUtils
 import spock.lang.Specification
 

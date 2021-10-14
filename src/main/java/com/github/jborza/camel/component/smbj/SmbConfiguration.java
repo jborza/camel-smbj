@@ -17,15 +17,24 @@
 package com.github.jborza.camel.component.smbj;
 
 import org.apache.camel.component.file.GenericFileConfiguration;
+import org.apache.camel.util.Pair;
 import org.apache.camel.util.StringHelper;
+import org.apache.camel.util.URISupport;
 
 import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class SmbConfiguration extends GenericFileConfiguration {
 
     private static final String DOMAIN_SEPARATOR = ";";
     private static final String USER_PASS_SEPARATOR = ":";
+    private static final String PASSWORD_PARAM_NAME = "password";
 
+
+    private final static String RAW_BEGIN = "RAW(";
     private String domain;
     private String username;
     private String password;
@@ -41,6 +50,23 @@ public class SmbConfiguration extends GenericFileConfiguration {
 
     @Override
     public void configure(URI uri) {
+        Optional<String> parametricPassword = Optional.empty();
+        Map<String, Object> parameters = Collections.emptyMap();
+        try {
+            parameters = URISupport.parseParameters(uri);
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
+        if (parameters.containsKey(PASSWORD_PARAM_NAME)){
+            List<Pair<Integer>> passwordParamRaw = URISupport.scanRaw(parameters.get(PASSWORD_PARAM_NAME)
+                                                                     .toString());
+            if (passwordParamRaw.size() > 0){
+                parametricPassword = Optional.of(parameters.get(PASSWORD_PARAM_NAME).toString().substring(passwordParamRaw.get(0).getLeft()+RAW_BEGIN.length(), passwordParamRaw.get(0).getRight()));
+            }
+            else {
+                parametricPassword = Optional.of(parameters.get(PASSWORD_PARAM_NAME).toString());
+            }
+        }
         super.configure(uri);
         String userInfo = uri.getUserInfo();
 
@@ -56,7 +82,9 @@ public class SmbConfiguration extends GenericFileConfiguration {
                 setUsername(userInfo);
             }
         }
-
+        if (parametricPassword.isPresent()) {
+            setPassword(parametricPassword.get());
+        }
         setHost(uri.getHost());
         setPort(uri.getPort());
         setPath(uri.getPath());

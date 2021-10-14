@@ -19,12 +19,21 @@ package com.github.jborza.camel.component.smbj;
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.Processor;
-import org.apache.camel.component.file.*;
+import org.apache.camel.component.file.GenericFile;
+import org.apache.camel.component.file.GenericFileConsumer;
+import org.apache.camel.component.file.GenericFileEndpoint;
+import org.apache.camel.component.file.GenericFileOperationFailedException;
+import org.apache.camel.component.file.GenericFileOperations;
+import org.apache.camel.component.file.GenericFileProcessStrategy;
 import org.apache.camel.util.FileUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class SmbConsumer extends GenericFileConsumer<SmbFile> {
+
+    private Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final String endpointPath;
     private final String currentRelativePath = "";
@@ -35,6 +44,16 @@ public class SmbConsumer extends GenericFileConsumer<SmbFile> {
         SmbConfiguration config = (SmbConfiguration) endpoint.getConfiguration();
         this.endpointPath = config.getShare() + "\\" + config.getPath();
         genericFileConverter = new GenericFileConverter();
+    }
+
+    @Override
+    protected Exchange createExchange(GenericFile<SmbFile> file) {
+        Exchange exchange = this.createExchange(true);
+        if (file != null) {
+            file.bindToExchange(exchange);
+        }
+
+        return exchange;
     }
 
     @Override

@@ -16,10 +16,11 @@
 
 package com.github.jborza.camel.component.smbj
 
-import org.apache.camel.component.file.GenericFileProcessStrategy
 import org.apache.camel.component.file.strategy.GenericFileNoOpProcessStrategy
-import org.apache.camel.component.file.strategy.GenericFileProcessStrategyFactory
-import org.apache.camel.main.Main
+import org.apache.camel.impl.DefaultCamelContext
+import org.apache.camel.model.language.SimpleExpression
+import org.apache.camel.spi.ExchangeFactory
+import org.apache.camel.spi.Language
 import spock.lang.Specification
 
 class SmbEndpointSpec extends Specification {
@@ -29,6 +30,7 @@ class SmbEndpointSpec extends Specification {
         def component = Mock(SmbComponent)
         def config = new SmbConfiguration(new URI(uri))
         def endpoint = new SmbEndpoint(uri, component, config)
+        endpoint.setCamelContext(createCamelContext())
 
         then:
         endpoint.getScheme() == "smb2"
@@ -43,6 +45,8 @@ class SmbEndpointSpec extends Specification {
         def component = Mock(SmbComponent)
         def config = new SmbConfiguration(new URI(uri))
         def endpoint = new SmbEndpoint(uri, component, config)
+        endpoint.setCamelContext(createCamelContext())
+
         def operations = endpoint.createSmbOperations()
 
         then:
@@ -55,6 +59,8 @@ class SmbEndpointSpec extends Specification {
         def component = Mock(SmbComponent)
         def config = new SmbConfiguration(new URI(uri))
         def endpoint = new SmbEndpoint(uri, component, config)
+        endpoint.setCamelContext(createCamelContext())
+
         //Camel usually sets this from URL
         endpoint.setDfs(expectedDfs)
         endpoint.isDfs() == expectedDfs
@@ -69,6 +75,8 @@ class SmbEndpointSpec extends Specification {
         def component = Mock(SmbComponent)
         def config = new SmbConfiguration(new URI(uri))
         def endpoint = new SmbEndpoint(uri, component, config)
+        endpoint.setCamelContext(createCamelContext())
+
         when:
         def producer = endpoint.createProducer()
         then:
@@ -78,10 +86,12 @@ class SmbEndpointSpec extends Specification {
 
     def "createConsumer returns SmbConsumer"() {
         given:
+        def context = createCamelContext()
         def uri = "smb2://server/share?dfs=true"
         def component = Mock(SmbComponent)
         def config = new SmbConfiguration(new URI(uri))
         def endpoint = new SmbEndpoint(uri, component, config)
+        endpoint.setCamelContext(context)
         endpoint.setProcessStrategy(new GenericFileNoOpProcessStrategy<SmbFile>())
         when:
         def consumer = endpoint.createConsumer(null)
@@ -90,8 +100,22 @@ class SmbEndpointSpec extends Specification {
     }
 
     def createCamelContext() {
-        def main = new Main()
-        return main.getOrCreateCamelContext()
+        def context = Mock(DefaultCamelContext)
+        context.resolveLanguage(_) >> {
+
+            Language lang = Mock(Language)
+            lang.createExpression(_ as String) >> {
+                return Mock(SimpleExpression)
+            }
+            return lang
+        }
+        context.adapt(_) >> {
+            return context;
+        }
+        context.getExchangeFactory() >> {
+            return Mock(ExchangeFactory)
+        }
+        return context
     }
 
     def "createConsumer throws exception if both delete and move are enabled"() {
@@ -101,6 +125,7 @@ class SmbEndpointSpec extends Specification {
         def component = new SmbComponent(context)
         def config = new SmbConfiguration(new URI(uri))
         def endpoint = new SmbEndpoint(uri, component, config)
+        endpoint.setCamelContext(context)
         //Camel usually sets this from URL
         endpoint.setDelete(true)
         endpoint.setMove(".moved")
@@ -116,6 +141,7 @@ class SmbEndpointSpec extends Specification {
         def component = Mock(SmbComponent)
         def config = new SmbConfiguration(new URI(uri))
         def endpoint = new SmbEndpoint(uri, component, config)
+        endpoint.setCamelContext(createCamelContext())
         endpoint.setProcessStrategy(new GenericFileNoOpProcessStrategy<SmbFile>())
         //Camel usually sets this from URL
         endpoint.setIdempotent(Boolean.TRUE)
