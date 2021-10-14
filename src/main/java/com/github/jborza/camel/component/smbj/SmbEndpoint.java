@@ -16,6 +16,7 @@
 
 package com.github.jborza.camel.component.smbj;
 
+import com.hierynomus.smbj.SmbConfig;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.component.file.GenericFile;
@@ -28,10 +29,6 @@ import org.apache.camel.support.DefaultExchange;
 import org.apache.camel.support.processor.idempotent.MemoryIdempotentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.hierynomus.smbj.SmbConfig;
-
-import java.util.concurrent.ConcurrentHashMap;
 
 @UriEndpoint(scheme = "smb2", title = "SMBJ", syntax = "smb2://user@server.example.com/sharename?password=secret&localWorkDirectory=/tmp", consumerClass = SmbConsumer.class)
 public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
@@ -117,16 +114,6 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
             file.bindToExchange(answer);
         }
         return answer;
-    }
-
-    @Override
-    public Exchange createExchange() {
-        Exchange exchange = super.createExchange();
-        if (exchange.getProperties() == null && DefaultExchange.class.isAssignableFrom(exchange.getClass())){
-            DefaultExchange def = (DefaultExchange) exchange;
-            def.setProperties(new ConcurrentHashMap<>());
-        }
-        return exchange;
     }
 
     public SmbOperations createSmbOperations() {

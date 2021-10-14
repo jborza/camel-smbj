@@ -21,12 +21,9 @@ import org.apache.camel.component.file.GenericFileEndpoint;
 import org.apache.camel.component.file.GenericFileOperationFailedException;
 import org.apache.camel.component.file.GenericFileOperations;
 import org.apache.camel.component.file.GenericFileProducer;
-import org.apache.camel.support.DefaultExchange;
 import org.apache.camel.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.ConcurrentHashMap;
 
 public class SmbProducer extends GenericFileProducer<SmbFile> {
 
@@ -34,16 +31,6 @@ public class SmbProducer extends GenericFileProducer<SmbFile> {
 
     protected SmbProducer(GenericFileEndpoint<SmbFile> endpoint, GenericFileOperations<SmbFile> operations) {
         super(endpoint, operations);
-    }
-
-    @Override
-    public Exchange createExchange() {
-        Exchange exchange = super.createExchange();
-        if (exchange.getProperties() == null && DefaultExchange.class.isAssignableFrom(exchange.getClass())){
-            DefaultExchange def = (DefaultExchange) exchange;
-            def.setProperties(new ConcurrentHashMap<>());
-        }
-        return exchange;
     }
 
     @Override
