@@ -25,10 +25,6 @@ public class SmbConfiguration extends GenericFileConfiguration {
 
     private static final String DOMAIN_SEPARATOR = ";";
     private static final String USER_PASS_SEPARATOR = ":";
-    private static final String PASSWORD_PARAM_NAME = "password";
-
-
-    private final static String RAW_BEGIN = "RAW(";
     private String domain;
     private String username;
     private String password;
