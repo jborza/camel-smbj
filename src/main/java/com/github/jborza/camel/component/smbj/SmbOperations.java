@@ -48,6 +48,11 @@ public class SmbOperations implements GenericFileOperations<SmbFile>, SmbShareFa
     }
 
     @Override
+    public GenericFile<SmbFile> newGenericFile() {
+        return new GenericFile<>();
+    }
+
+    @Override
     public void setEndpoint(GenericFileEndpoint<SmbFile> genericFileEndpoint) {
         this.endpoint = genericFileEndpoint;
     }

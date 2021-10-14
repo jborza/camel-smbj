@@ -25,7 +25,6 @@ public class SmbConfiguration extends GenericFileConfiguration {
 
     private static final String DOMAIN_SEPARATOR = ";";
     private static final String USER_PASS_SEPARATOR = ":";
-
     private String domain;
     private String username;
     private String password;
@@ -56,7 +55,6 @@ public class SmbConfiguration extends GenericFileConfiguration {
                 setUsername(userInfo);
             }
         }
-
         setHost(uri.getHost());
         setPort(uri.getPort());
         setPath(uri.getPath());

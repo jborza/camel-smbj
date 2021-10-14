@@ -21,14 +21,23 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.component.file.GenericFile;
 import org.apache.camel.component.file.GenericFileEndpoint;
+import org.apache.camel.component.file.GenericFileProcessStrategy;
 import org.apache.camel.component.file.GenericFileProducer;
-import org.apache.camel.impl.DefaultExchange;
-import org.apache.camel.processor.idempotent.MemoryIdempotentRepository;
 import org.apache.camel.spi.UriEndpoint;
 import org.apache.camel.spi.UriParam;
+import org.apache.camel.support.DefaultExchange;
+import org.apache.camel.support.processor.idempotent.MemoryIdempotentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @UriEndpoint(scheme = "smb2", title = "SMBJ", syntax = "smb2://user@server.example.com/sharename?password=secret&localWorkDirectory=/tmp", consumerClass = SmbConsumer.class)
 public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
+
+    private Logger log = LoggerFactory.getLogger(this.getClass());
+
+    @UriParam(description = "You can use this special option to provide RAW in password as an " +
+            "alternative to placing it directly to URI")
+    protected String password;
 
     @UriParam
     protected boolean dfs;
@@ -40,6 +49,9 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
 
     @Override
     public SmbConfiguration getConfiguration() {
+        if (password != null){
+            ((SmbConfiguration) configuration).setPassword(password);
+        }
         return (SmbConfiguration)configuration;
     }
 
@@ -87,6 +99,14 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
         this.dfs = dfsEnabled;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     @Override
     public Exchange createExchange(GenericFile<SmbFile> file) {
         Exchange answer = new DefaultExchange(this);
@@ -124,6 +144,11 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
     @Override
     public boolean isAbsolute(String name) {
         return true;
+    }
+
+    @Override
+    protected GenericFileProcessStrategy<SmbFile> createGenericFileStrategy() {
+        return new SmbFileProcessStrategy().createGenericFileProcessStrategy(this.getCamelContext(), this.getParamsAsMap());
     }
 
     @Override

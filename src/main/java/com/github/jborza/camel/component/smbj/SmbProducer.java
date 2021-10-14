@@ -22,8 +22,12 @@ import org.apache.camel.component.file.GenericFileOperationFailedException;
 import org.apache.camel.component.file.GenericFileOperations;
 import org.apache.camel.component.file.GenericFileProducer;
 import org.apache.camel.util.FileUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SmbProducer extends GenericFileProducer<SmbFile> {
+
+    private Logger log = LoggerFactory.getLogger(this.getClass());
 
     protected SmbProducer(GenericFileEndpoint<SmbFile> endpoint, GenericFileOperations<SmbFile> operations) {
         super(endpoint, operations);
