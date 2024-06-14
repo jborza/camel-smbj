@@ -33,6 +33,9 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
     @UriParam
     protected boolean dfs;
 
+    @UriParam
+    protected boolean signingRequired;
+
     public SmbEndpoint(String uri, SmbComponent smbComponent, SmbConfiguration configuration) {
         super(uri, smbComponent);
         this.configuration = configuration;
@@ -87,6 +90,14 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
         this.dfs = dfsEnabled;
     }
 
+    public boolean isSigningRequired() {
+        return signingRequired;
+    }
+
+    public void setSigningRequired(boolean signingRequired) {
+        this.signingRequired = signingRequired;
+    }
+
     @Override
     public Exchange createExchange(GenericFile<SmbFile> file) {
         Exchange answer = new DefaultExchange(this);
@@ -108,6 +119,7 @@ public class SmbEndpoint extends GenericFileEndpoint<SmbFile> {
                     .builder()
                     .withMultiProtocolNegotiate(true)
                     .withDfsEnabled(isDfs())
+                    .withSigningRequired(isSigningRequired())
                     .build();
     }
 

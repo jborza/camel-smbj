@@ -55,12 +55,28 @@ class SmbEndpointSpec extends Specification {
         def component = Mock(SmbComponent)
         def config = new SmbConfiguration(new URI(uri))
         def endpoint = new SmbEndpoint(uri, component, config)
+
         //Camel usually sets this from URL
         endpoint.setDfs(expectedDfs)
         endpoint.isDfs() == expectedDfs
 
         where:
         expectedDfs << [true, false]
+    }
+
+    def "signingRequired attribute is set up"() {
+        expect:
+        def uri = "smb2://server/share?signingRequired=true"
+        def component = Mock(SmbComponent)
+        def config = new SmbConfiguration(new URI(uri))
+        def endpoint = new SmbEndpoint(uri, component, config)
+
+        //Camel usually sets this from URL
+        endpoint.setSigningRequired(expectedSigningRequired)
+        endpoint.isSigningRequired() == expectedSigningRequired
+
+        where:
+        expectedSigningRequired << [true, false]
     }
 
     def "createProducer returns SmbProducer"() {
